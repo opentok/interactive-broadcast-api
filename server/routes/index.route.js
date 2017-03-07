@@ -1,7 +1,8 @@
 import express from 'express';
-// import authRoutes from './auth.route';
+
 
 const router = express.Router(); // eslint-disable-line new-cap
+const db = require('../services/firebase');
 
 /** GET /health-check - Check service health */
 router.get('/health-check', (req, res) =>

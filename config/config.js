@@ -24,8 +24,8 @@ const config = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
   jwtSecret: envVars.JWT_SECRET,
-  fireBaseAuthDomain: 'financial-demo-stg.firebaseapp.com',
-  firebaseDatabaseURL: 'https://financial-demo-stg.firebaseio.com',
+  fireBaseAuthDomain: 'opentok-ib.firebaseapp.com',
+  firebaseDatabaseURL: 'https://opentok-ib.firebaseio.com',
 };
 
 export default config;
