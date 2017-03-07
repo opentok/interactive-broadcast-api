@@ -1,8 +1,8 @@
 {
-  "name": "express-mongoose-es6-rest-api",
+  "name": "ibs-backend",
   "version": "2.0.0",
-  "description": "A Boilerplate application for building REST APIs using express, mongoose in ES6 with code coverage",
-  "author": "Kunal Kapadia <kunalkapadia12@gmail.com>",
+  "description": "Interactive Broadcast Solution Backend",
+  "author": "TokBox <vsolutions@tokbox.com>",
   "main": "index.js",
   "private": false,
   "engines": {
@@ -12,7 +12,7 @@
   },
   "scripts": {
     "start": "gulp serve",
-    "start:debug": "cross-env DEBUG=express-mongoose-es6-rest-api:* yarn start",
+    "start:debug": "cross-env DEBUG=ibs-backend:* yarn start",
     "build": "gulp",
     "lint": "esw *.js server config --color",
     "lint:watch": "yarn lint -- --watch",
@@ -27,19 +27,6 @@
     "type": "git",
     "url": "git@github.com:KunalKapadia/express-mongoose-es6-rest-api.git"
   },
-  "keywords": [
-    "express",
-    "node",
-    "node.js",
-    "mongodb",
-    "mongoose",
-    "es6",
-    "mocha",
-    "istanbul",
-    "REST",
-    "API",
-    "boilerplate"
-  ],
   "dependencies": {
     "bluebird": "3.4.6",
     "body-parser": "1.15.2",
@@ -52,12 +39,12 @@
     "express-jwt": "5.1.0",
     "express-validation": "1.0.1",
     "express-winston": "2.1.2",
+    "firebase-admin": "4.1.2",
     "helmet": "3.1.0",
     "http-status": "^0.2.0",
     "joi": "10.0.6",
     "jsonwebtoken": "7.1.9",
     "method-override": "^2.3.5",
-    "mongoose": "4.7.4",
     "morgan": "1.7.0",
     "winston": "2.3.0"
   },
