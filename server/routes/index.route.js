@@ -1,15 +1,8 @@
 import express from 'express';
-
+import adminRoutes from './admin.route';
 
 const router = express.Router(); // eslint-disable-line new-cap
-const db = require('../services/firebase');
-
-/** GET /health-check - Check service health */
-router.get('/health-check', (req, res) =>
-  res.send('OK')
-);
-
-// mount auth routes at /auth
-// router.use('/auth', authRoutes);
+// mount admin routes at /admin
+router.use('/admin', adminRoutes);
 
 export default router;
