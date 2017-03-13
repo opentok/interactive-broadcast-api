@@ -9,7 +9,8 @@ firebase.initializeApp({
   credential: firebase.credential.cert(serviceAccountCredentials)
 });
 
-// As an admin, the app has access to read and write all data, regardless of Security Rules
-const db = firebase.database();
+module.exports = {
+  db: firebase.database(),
+  admin: firebase,
+};
 
-module.exports = db;
