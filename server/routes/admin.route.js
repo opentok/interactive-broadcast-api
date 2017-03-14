@@ -1,50 +1,27 @@
 import express from 'express';
-
-const bodyParser = require('body-parser');
+import bodyParser from 'body-parser';
 
 const router = express.Router(); // eslint-disable-line new-cap
 const Admin = require('../services/admin');
+const getAPIResponse = require('../helpers/APIResponse');
+
 
 // const jsonParser = bodyParser.json();
 const urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 // Get all Users/Admin
-
-router.get('/', (req, res) => {
-  Admin.getAdmins()
-    .then(admins => res.status(200).send(admins))
-    .catch(error => res.status(500).send(error));
-});
+router.get('/', getAPIResponse(() => Admin.getAdmins(), { skipNotFoundValidation: true }));
 
 // Get Users/Admin by Id
-router.get('/:id', (req, res) => {
-  Admin.getAdmin(req.params.id)
-    .then(admin => res.status(200).send(admin))
-    .catch(error => res.status(500).send(error));
-});
+router.get('/:id', getAPIResponse(req => Admin.getAdmin(req.params.id)));
 
 // Create Users/Admin by Id
-router.post('/', urlencodedParser, (req, res) => {
-  if (!req.body) {
-    return res.status(500).send('No data in post');
-  }
-  return Admin.createAdmin(req.body)
-    .then(admin => res.status(200).send(admin))
-    .catch(error => res.status(500).send(error));
-});
+router.post('/', urlencodedParser, getAPIResponse(req => Admin.createUser(req.body)));
 
 // Edit Users/Admin by Id
-router.patch('/:id', urlencodedParser, (req, res) => {
-  Admin.editAdmin(req.params.id, req.body)
-    .then(admin => res.status(200).send(admin))
-    .catch(error => res.status(500).send(error));
-});
+router.patch('/:id', urlencodedParser, getAPIResponse(req => Admin.updateAdmin(req.params.id, req.body)));
 
 // Delete Users/Admin by Id
-router.delete('/:id', (req, res) => {
-  Admin.deleteAdmin(req.params.id)
-    .then(() => res.status(200).send())
-    .catch(error => res.status(500).send(error));
-});
+router.delete('/:id', getAPIResponse(req => Admin.deleteUser(req.params.id)));
 
 export default router;

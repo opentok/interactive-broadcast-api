@@ -1,13 +1,19 @@
 const Promise = require('bluebird');
 const { db, admin } = require('./firebase');
-const Validator = require('validatorjs');
 const R = require('ramda');
+const Validator = require('validatorjs');
 
-const userProps = ['name', 'otApiKey', 'otSecret', 'userName', 'superAdmin', 'httpSupport', 'userId'];
-const adminProps = ['displayName', 'email', 'password'];
+const adminProps = ['displayName', 'otApiKey', 'otSecret', 'superAdmin', 'httpSupport', 'id', 'email', 'hls'];
+const userProps = ['displayName', 'email', 'password'];
+const buildUser = (props, userData) => R.pick(props, userData);
 
-const buildAdmin = (props, userData) => R.pick(props, userData);
+const setDefaults = (adminData) => {
+  const fields = ['hls', 'httpSupport', 'superAdmin'];
+  const setDefault = (v, k) => (R.contains(k, fields) ? R.defaultTo(false)(v) : v);
+  return R.mapObjIndexed(setDefault, adminData);
+};
 
+const buildAdmin = (props, adminData) => setDefaults(R.pick(props, adminData));
 const userValidationRules = props => R.zipObj(props, R.times(() => 'required', props.length));
 
 /**
@@ -17,53 +23,99 @@ const userValidationRules = props => R.zipObj(props, R.times(() => 'required', p
 const getAdmins = () => new Promise((resolve, reject) => {
   db.ref('admins').once('value')
     .then(snapshot => resolve(snapshot.val()))
-    .catch(error => reject(error));
+    .catch(reject);
 });
 
-const getAdmin = id => new Promise((resolve, reject) => {
-  db.ref('admins').child(id).once('value')
+/**
+ * Get a particular Admin from firebase
+ * @param {String} uid
+ * @returns {Promise} <resolve: Admin data, reject: Error>
+ */
+const getAdmin = uid => new Promise((resolve, reject) => {
+  db.ref('admins').child(uid).once('value')
     .then(snapshot => resolve(snapshot.val()))
-    .catch(error => reject(error));
+    .catch(reject);
 });
 
-const createUser = data => new Promise((resolve, reject) => {
-  db.ref(`admins/${data.userId}`).set(buildAdmin(userProps, data))
-    .catch(error => reject(error));
-  db.ref(`admins/${data.userId}`).on('value', snapshot => resolve(snapshot.val()));
-});
-
+/**
+ * Create an admin
+ * @param {String} uid
+ * @returns {Promise} <resolve: Admin data, reject: Error>
+ */
 const createAdmin = data => new Promise((resolve, reject) => {
-  const validation = new Validator(data, userValidationRules(adminProps));
+  db.ref(`admins/${data.id}`).set(buildAdmin(adminProps, data))
+    .then(resolve(data))
+    .catch(reject);
+});
+
+/**
+ * Create an user in firebase-admin
+ * @param {Object} admin data: <name, otApiKey, otSecret, superAdmin, httpSupport,
+ * displayName, email>
+ * @returns {Promise} <resolve: Admin data, reject: Error>
+ */
+const createUser = data => new Promise((resolve, reject) => {
+  const validation = new Validator(data, userValidationRules(userProps));
   if (validation.fails()) {
     reject(validation.errors);
   }
-  admin.auth().createUser(buildAdmin(adminProps, data))
-    .then(authUser => createUser(R.merge({ userId: authUser.uid }, data)))
+
+  admin.auth().createUser(buildUser(userProps, data))
+    .then(authUser => createAdmin(R.merge({ id: authUser.uid }, data)))
     .then(user => resolve(user))
-    .catch(error => reject(error));
+    .catch(reject);
 });
 
-const editAdmin = (id, data) => new Promise((resolve, reject) => {
-  db.ref(`admins/${id}`).update(data)
-    .catch(error => reject(error));
-  db.ref(`admins/${id}`).on('value', snapshot => resolve(snapshot.val()));
+/**
+ * Update an user in firebase-admin
+ * @param {String} uid
+ * @param {Object} user <email, displayName>
+ * @returns {Promise} <resolve: User data, reject: Error>
+ */
+const updateUser = (uid, data) => new Promise((resolve, reject) => {
+  admin.auth().updateUser(uid, data)
+  .then(resolve(true))
+  .catch(reject);
 });
 
-const deleteAdmin = id => new Promise((resolve, reject) => {
-  db.ref(`admins/${id}`).remove()
-    .catch(error => reject(error));
-  // this is not triggering --->
-  db.ref('admins').on('child_removed', (oldSnapshot) => {
-    admin.auth().deleteUser(oldSnapshot.key).then(resolve(true));
-  });
+/**
+ * Update an admin
+ * @param {String} uid
+ * @param {Object} admin data: <otApiKey, otSecret, superAdmin, httpSupport, displayName, email>
+ * @returns {Promise} <resolve: Admin data, reject: Error>
+ */
+const updateAdmin = (uid, data) => new Promise((resolve, reject) => {
+  db.ref(`admins/${uid}`).update(data)
+    .then(updateUser(R.pick(['email', 'displayName'], data)))
+    .then(resolve(data))
+    .catch(reject);
 });
 
+/**
+ * Delete an admin in the DB
+ * @param {String} uid
+ */
+const deleteAdmin = uid => new Promise((resolve, reject) => {
+  db.ref(`admins/${uid}`).remove()
+    .then(resolve(true))
+    .catch(reject);
+});
+
+/**
+ * Delete an user in firebase-admin
+ * @param {String} uid
+ */
+const deleteUser = uid => new Promise((resolve, reject) => {
+  admin.auth().deleteUser(uid)
+    .then(deleteAdmin(uid))
+    .then(resolve(true))
+    .catch(reject);
+});
 
 export {
   getAdmins,
   getAdmin,
-  createAdmin,
-  editAdmin,
+  updateAdmin,
   createUser,
-  deleteAdmin
+  deleteUser
 };

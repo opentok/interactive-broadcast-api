@@ -1217,10 +1217,6 @@ cryptiles@2.x.x:
   dependencies:
     boom "2.x.x"
 
-crypto@*:
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/crypto/-/crypto-0.0.3.tgz#470a81b86be4c5ee17acc8207a1f5315ae20dbb0"
-
 css@2.X:
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/css/-/css-2.2.1.tgz#73a4c81de85db664d4ee674f7d47085e3b2d55dc"
@@ -2385,6 +2381,10 @@ has@^1.0.1:
   resolved "https://registry.yarnpkg.com/has/-/has-1.0.1.tgz#8461733f538b0837c9361e39a9ab9e9704dc2f28"
   dependencies:
     function-bind "^1.0.2"
+
+hashids@1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/hashids/-/hashids-1.1.1.tgz#3c36fcc5b3ba1a96a8fa67a632eb7877c41c6d3e"
 
 hawk@~3.1.3:
   version "3.1.3"
@@ -3781,6 +3781,10 @@ qs@~6.3.0:
   version "6.3.0"
   resolved "https://registry.yarnpkg.com/qs/-/qs-6.3.0.tgz#f403b264f23bc01228c74131b407f18d5ea5d442"
 
+ramda@0.23.0:
+  version "0.23.0"
+  resolved "https://registry.yarnpkg.com/ramda/-/ramda-0.23.0.tgz#ccd13fff73497a93974e3e86327bfd87bd6e8e2b"
+
 randomatic@^1.1.3:
   version "1.1.6"
   resolved "https://registry.yarnpkg.com/randomatic/-/randomatic-1.1.6.tgz#110dcabff397e9dcff7c0789ccc0a49adf1ec5bb"
@@ -4620,6 +4624,10 @@ validate-commit-msg@^2.6.1:
     conventional-commit-types "^2.0.0"
     findup "0.1.5"
     semver-regex "1.0.0"
+
+validatorjs@3.11.0:
+  version "3.11.0"
+  resolved "https://registry.yarnpkg.com/validatorjs/-/validatorjs-3.11.0.tgz#d8177e62e663e4e06a6517540dfe1beabba2dfe5"
 
 vary@^1, vary@~1.1.0:
   version "1.1.0"
