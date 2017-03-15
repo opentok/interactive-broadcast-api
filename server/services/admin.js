@@ -1,10 +1,9 @@
 const Promise = require('bluebird');
 const { db, admin } = require('./firebase');
 const R = require('ramda');
-const Validator = require('validatorjs');
+const dbProperties = require('./dbProperties');
 
-const adminProps = ['displayName', 'otApiKey', 'otSecret', 'superAdmin', 'httpSupport', 'id', 'email', 'hls'];
-const userProps = ['displayName', 'email', 'password'];
+const { adminProps, userProps } = dbProperties;
 const buildUser = (props, userData) => R.pick(props, userData);
 
 const setDefaults = (adminData) => {
@@ -14,7 +13,6 @@ const setDefaults = (adminData) => {
 };
 
 const buildAdmin = (props, adminData) => setDefaults(R.pick(props, adminData));
-const userValidationRules = props => R.zipObj(props, R.times(() => 'required', props.length));
 
 /**
  * Get the list of admins
@@ -55,11 +53,6 @@ const createAdmin = data => new Promise((resolve, reject) => {
  * @returns {Promise} <resolve: Admin data, reject: Error>
  */
 const createUser = data => new Promise((resolve, reject) => {
-  const validation = new Validator(data, userValidationRules(userProps));
-  if (validation.fails()) {
-    reject(validation.errors);
-  }
-
   admin.auth().createUser(buildUser(userProps, data))
     .then(authUser => createAdmin(R.merge({ id: authUser.uid }, data)))
     .then(user => resolve(user))
