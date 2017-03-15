@@ -1,18 +1,12 @@
 import express from 'express';
-/* import validate from 'express-validation';
-import expressJwt from 'express-jwt';
+import validate from 'express-validation';
 import paramValidation from '../../config/param-validation';
-import config from '../../config/config'; */
+import auth from '../services/auth';
 
 const router = express.Router(); // eslint-disable-line new-cap
 
-/** POST /api/auth/login - Returns token if correct username and password is provided */
-/* router.route('/login')
-  .post(validate(paramValidation.login), authCtrl.login);*/
-
-/** GET /api/auth/random-number - Protected route,
- * needs token returned by the above as header. Authorization: Bearer {token} */
-/* router.route('/random-number')
-  .get(expressJwt({ secret: config.jwtSecret }), authCtrl.getRandomNumber);*/
+/** POST /api/auth/login - Returns token */
+router.route('/token')
+  .post(validate(paramValidation.login), auth.login);
 
 export default router;
