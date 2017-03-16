@@ -5,19 +5,16 @@ const Admin = require('../services/admin');
 const getAPIResponse = require('../helpers/APIResponse');
 const { validateAdmin } = require('../middleware/validation');
 
-// Get all Users/Admin
-router.get('/', getAPIResponse(() => Admin.getAdmins(), { skipNotFoundValidation: true }));
+const getAdmins = getAPIResponse(() => Admin.getAdmins(), { skipNotFoundValidation: true });
+const getAdminById = getAPIResponse(req => Admin.getAdmin(req.params.id));
+const createAdmin = getAPIResponse(req => Admin.createUser(req.body));
+const updateAdmin = getAPIResponse(req => Admin.updateAdmin(req.params.id, req.body));
+const deleteAdmin = getAPIResponse(req => Admin.deleteUser(req.params.id));
 
-// Get Users/Admin by Id
-router.get('/:id', getAPIResponse(req => Admin.getAdmin(req.params.id)));
-
-// Create Users/Admin by Id
-router.post('/', validateAdmin, getAPIResponse(req => Admin.createUser(req.body)));
-
-// Edit Users/Admin by Id
-router.patch('/:id', validateAdmin, getAPIResponse(req => Admin.updateAdmin(req.params.id, req.body)));
-
-// Delete Users/Admin by Id
-router.delete('/:id', getAPIResponse(req => Admin.deleteUser(req.params.id)));
+router.get('/', getAdmins);
+router.get('/:id', getAdminById);
+router.post('/', validateAdmin, createAdmin);
+router.patch('/:id', validateAdmin, updateAdmin);
+router.delete('/:id', deleteAdmin);
 
 export default router;

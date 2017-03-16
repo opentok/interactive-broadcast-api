@@ -1,18 +1,15 @@
 const Promise = require('bluebird');
 const { db, admin } = require('./firebase');
 const R = require('ramda');
-const dbProperties = require('./dbProperties');
-
-const { adminProps, userProps } = dbProperties;
-const buildUser = (props, userData) => R.pick(props, userData);
+const { adminProps, userProps } = require('./dbProperties');
 
 const setDefaults = (adminData) => {
   const fields = ['hls', 'httpSupport', 'superAdmin'];
   const setDefault = (v, k) => (R.contains(k, fields) ? R.defaultTo(false)(v) : v);
   return R.mapObjIndexed(setDefault, adminData);
 };
-
-const buildAdmin = (props, adminData) => setDefaults(R.pick(props, adminData));
+const buildUser = (data, props = userProps) => R.pick(props, data);
+const buildAdmin = data => setDefaults(buildUser(data, adminProps));
 
 /**
  * Get the list of admins

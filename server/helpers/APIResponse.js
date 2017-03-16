@@ -1,6 +1,6 @@
 import httpStatus from 'http-status';
 
-const defaultOptions = { skipNotFoundValidation: true };
+const defaultOptions = { skipNotFoundValidation: false };
 
 const getAPIResponse = (fn, options = defaultOptions) =>
   (req, res) => {

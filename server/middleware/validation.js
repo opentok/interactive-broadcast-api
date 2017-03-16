@@ -15,12 +15,6 @@ const sendError = (res, error) => {
   res.status(status).send({ message, code });
 };
 
-const validateOTCredentials = ({ otApiKey, otSecret }) => new Promise((resolve, reject) => {
-  opentok.createSession(otApiKey, otSecret, true)
-  .then(() => resolve())
-  .catch(reject(new Error('Invalid APIKEY OR SECRET')));
-});
-
 const userValidation = data => new Promise((resolve, reject) => {
   const validation = new Validator(data, userValidationRules(userProps));
   if (validation.fails()) {
@@ -31,10 +25,10 @@ const userValidation = data => new Promise((resolve, reject) => {
 });
 
 const validateAdmin = (req, res, next) => {
-  validateOTCredentials(req.body)
-    .then(() => userValidation(req.body))
-    .then(next)
-    .catch(R.partial(sendError, [res]));
+  opentok.createSession(req.body.otApiKey, req.body.otSecret, true)
+  .then(() => userValidation(req.body))
+  .then(next)
+  .catch(R.partial(sendError, [res]));
 };
 
 module.exports = {
