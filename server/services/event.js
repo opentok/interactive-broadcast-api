@@ -23,6 +23,17 @@ const getEvents = (adminId = null) => new Promise((resolve, reject) => {
 });
 
 /**
+ * Get a particular Event
+ * @param {String} id
+ * @returns {Promise} <resolve: Event data, reject: Error>
+ */
+const getEvent = id => new Promise((resolve, reject) => {
+  db.ref('events').child(id).once('value')
+    .then(snapshot => resolve(snapshot.val()))
+    .catch(reject);
+});
+
+/**
  * Create an event
  * @param {Object} event
  * @returns {Promise} <resolve: Event data, reject: Error>
@@ -30,7 +41,7 @@ const getEvents = (adminId = null) => new Promise((resolve, reject) => {
 const saveEvent = data => new Promise((resolve, reject) => {
   const id = db.ref('events').push().key;
   db.ref(`events/${id}`).set(buildEvent(eventProps, R.mergeAll([timestampCreate, { id }, data])))
-    .then(resolve)
+    .then(resolve(getEvent(id)))
     .catch(reject);
 });
 
@@ -68,7 +79,7 @@ const create = data =>
  */
 const update = (id, data) => new Promise((resolve, reject) => {
   db.ref(`events/${id}`).update(buildEvent(eventProps, R.merge(timestampUpdate, data)))
-    .then(resolve(data))
+    .then(resolve(getEvent(id)))
     .catch(reject);
 });
 
@@ -79,17 +90,6 @@ const update = (id, data) => new Promise((resolve, reject) => {
 const deleteEvent = id => new Promise((resolve, reject) => {
   db.ref(`events/${id}`).remove()
     .then(resolve(true))
-    .catch(reject);
-});
-
-/**
- * Get a particular Event
- * @param {String} id
- * @returns {Promise} <resolve: Event data, reject: Error>
- */
-const getEvent = id => new Promise((resolve, reject) => {
-  db.ref('events').child(id).once('value')
-    .then(snapshot => resolve(snapshot.val()))
     .catch(reject);
 });
 

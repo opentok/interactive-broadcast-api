@@ -1,14 +1,16 @@
 import admin from 'firebase-admin';
 
 const adminProps = [
+  'id',
   'displayName',
   'otApiKey',
   'otSecret',
   'superAdmin',
   'httpSupport',
-  'id',
   'email',
-  'hls'
+  'hls',
+  'createdAt',
+  'updatedAt'
 ];
 
 const userProps = ['displayName',
