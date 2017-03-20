@@ -93,10 +93,31 @@ const deleteEvent = id => new Promise((resolve, reject) => {
     .catch(reject);
 });
 
+/**
+ * Delete events by AdminId
+ * @param {String} id
+ */
+const deleteEventsByAdminId = id => new Promise((resolve, reject) => {
+  const ref = db.ref('events');
+  const removeEvents = (snapshot) => {
+    const updates = {};
+    snapshot.forEach((child) => {
+      updates[child.key] = null;
+    });
+    ref.update(updates);
+  };
+
+  ref.orderByChild('adminId').equalTo(id).once('value')
+  .then(removeEvents)
+  .then(resolve)
+  .catch(reject);
+});
+
 export {
   getEvents,
   create,
   update,
   deleteEvent,
-  getEvent
+  getEvent,
+  deleteEventsByAdminId
 };

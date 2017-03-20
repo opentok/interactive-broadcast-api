@@ -2,6 +2,7 @@ const Promise = require('bluebird');
 const { db, admin } = require('./firebase');
 const R = require('ramda');
 const { adminProps, userProps, timestampCreate, timestampUpdate } = require('./dbProperties');
+const Event = require('./event');
 
 const setDefaults = (adminData) => {
   const fields = ['hls', 'httpSupport', 'superAdmin'];
@@ -88,7 +89,7 @@ const updateAdmin = (uid, data) => new Promise((resolve, reject) => {
  */
 const deleteAdmin = uid => new Promise((resolve, reject) => {
   db.ref(`admins/${uid}`).remove()
-    .then(resolve(true))
+    .then(resolve)
     .catch(reject);
 });
 
@@ -98,8 +99,9 @@ const deleteAdmin = uid => new Promise((resolve, reject) => {
  */
 const deleteUser = uid => new Promise((resolve, reject) => {
   admin.auth().deleteUser(uid)
-    .then(deleteAdmin(uid))
-    .then(resolve(true))
+    .then(() => deleteAdmin(uid))
+    .then(() => Event.deleteEventsByAdminId(uid))
+    .then(() => resolve(true))
     .catch(reject);
 });
 
