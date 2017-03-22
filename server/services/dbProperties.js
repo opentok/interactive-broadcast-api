@@ -41,14 +41,22 @@ const eventProps = [
   'createdAt',
   'updatedAt'
 ];
+const TS = admin.database.ServerValue.TIMESTAMP;
+const timestampCreate = { createdAt: TS, updatedAt: TS };
+const timestampUpdate = { updatedAt: TS };
 
-const timestampCreate = { createdAt: admin.database.ServerValue.TIMESTAMP, updatedAt: admin.database.ServerValue.TIMESTAMP };
-const timestampUpdate = { updatedAt: admin.database.ServerValue.TIMESTAMP };
+const eventStatuses = {
+  NON_STARTED: 'nonStarted',
+  PRESHOW: 'preshow',
+  LIVE: 'live',
+  CLOSED: 'closed'
+};
 
 export {
   adminProps,
   userProps,
   eventProps,
   timestampCreate,
-  timestampUpdate
+  timestampUpdate,
+  eventStatuses
 };

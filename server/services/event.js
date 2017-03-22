@@ -1,11 +1,12 @@
 const Promise = require('bluebird');
 const { db } = require('./firebase');
 const R = require('ramda');
-const { eventProps, timestampCreate, timestampUpdate } = require('./dbProperties');
+const { eventProps, timestampCreate, timestampUpdate, eventStatuses } = require('./dbProperties');
 const Admin = require('./admin');
 const OpenTok = require('./opentok');
 
 const setDefaults = (eventData) => {
+  if (!eventData.status) R.set('status', eventStatuses.NON_STARTED, eventData);
   const fields = ['archiveEvent', 'composed'];
   const setDefault = (v, k) => (R.contains(k, fields) ? R.defaultTo(false)(v) : v);
   return R.mapObjIndexed(setDefault, eventData);
@@ -30,6 +31,26 @@ const getEvents = (adminId = null) => new Promise((resolve, reject) => {
 const getEvent = id => new Promise((resolve, reject) => {
   db.ref('events').child(id).once('value')
     .then(snapshot => resolve(snapshot.val()))
+    .catch(reject);
+});
+
+/**
+ * Get a particular Event
+ * @param {String} adminId
+ * @param {String} fanUrl
+ * @returns {Promise} <resolve: Event data, reject: Error>
+ */
+const getEventByPrimaryKey = (adminId, fanUrl) => new Promise((resolve, reject) => {
+  const filterByAdmin = (snapshot) => {
+    let event;
+    R.forEachObjIndexed((s) => {
+      if (s.adminId === adminId) event = s;
+    }, snapshot.val());
+    return event;
+  };
+  db.ref('events').orderByChild('fanUrl').equalTo(fanUrl).once('value')
+    .then(filterByAdmin)
+    .then(resolve)
     .catch(reject);
 });
 
@@ -119,5 +140,6 @@ export {
   update,
   deleteEvent,
   getEvent,
-  deleteEventsByAdminId
+  deleteEventsByAdminId,
+  getEventByPrimaryKey
 };
