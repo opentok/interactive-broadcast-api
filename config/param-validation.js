@@ -1,6 +1,8 @@
 import Joi from 'joi';
 import R from 'ramda';
 
+const { eventStatuses } = require('../server/services/dbProperties');
+
 const login = {
   body: {
     uid: Joi.string().required()
@@ -37,8 +39,15 @@ const event = {
     hostUrl: Joi.string().required(),
     archiveEvent: Joi.boolean().required(),
     redirectUrl: Joi.string(),
-    composed: Joi.boolean(),
+    composed: Joi.boolean().required(),
     adminId: Joi.string(),
+    status: Joi.string().valid(R.values(eventStatuses)),
+  },
+};
+
+const eventStatus = {
+  body: {
+    status: Joi.string().valid(R.values(eventStatuses)).required(),
   },
 };
 
@@ -47,4 +56,5 @@ export {
   createAdmin,
   updateAdmin,
   event,
+  eventStatus
 };

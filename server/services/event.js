@@ -1,15 +1,17 @@
 const Promise = require('bluebird');
 const { db } = require('./firebase');
 const R = require('ramda');
-const { eventProps, timestampCreate, timestampUpdate, eventStatuses } = require('./dbProperties');
+const { eventProps, timestampCreate, timestampUpdate, eventStatuses, TS } = require('./dbProperties');
 const Admin = require('./admin');
 const OpenTok = require('./opentok');
 
 const setDefaults = (eventData) => {
-  if (!eventData.status) R.set('status', eventStatuses.NON_STARTED, eventData);
-  const fields = ['archiveEvent', 'composed'];
-  const setDefault = (v, k) => (R.contains(k, fields) ? R.defaultTo(false)(v) : v);
-  return R.mapObjIndexed(setDefault, eventData);
+  const setDefaultProps = {
+    status: R.defaultTo(eventStatuses.NON_STARTED),
+    archiveEvent: R.defaultTo(false),
+    composed: R.defaultTo(false),
+  };
+  return R.evolve(setDefaultProps, eventData);
 };
 const buildEvent = (props, eventData) => setDefaults(R.pick(props, eventData));
 
@@ -69,7 +71,7 @@ const saveEvent = data => new Promise((resolve, reject) => {
 
 const getSessions = admin =>
   new Promise((resolve, reject) => {
-    const createSession = OpenTok.createSession(admin.otApiKey, admin.otSecret, true);
+    const createSession = OpenTok.createSession(admin.otApiKey, admin.otSecret);
     Promise.all([createSession, createSession])
       .then(sessions => resolve({ sessionId: sessions[0].sessionId, stageSessionId: sessions[1].sessionId }))
       .catch(reject);
@@ -96,12 +98,65 @@ const create = data =>
  * Update an event
  * @param {String} id
  * @param {Object} eventData
- * @returns {Promise} <resolve: Admin data, reject: Error>
+ * @returns {Promise} <resolve: Event data, reject: Error>
  */
 const update = (id, data) => new Promise((resolve, reject) => {
   db.ref(`events/${id}`).update(buildEvent(eventProps, R.merge(timestampUpdate, data)))
     .then(resolve(getEvent(id)))
     .catch(reject);
+});
+
+
+/**
+ * Change status
+ * @param {String} id
+ * @param {Object} eventData
+ * @returns {Promise} <resolve: Event data, reject: Error>
+ */
+const changeStatus = (id, data) => new Promise((resolve, reject) => {
+  const updateData = data;
+
+  if (data.status === eventStatuses.LIVE) {
+    updateData.showStartedAt = TS;
+  } else if (data.status === eventStatuses.CLOSED) {
+    updateData.showEndedAt = TS;
+  }
+
+  update(id, updateData)
+  .then(resolve(getEvent(id)))
+  .catch(reject);
+});
+
+const constructObj = event => new Promise((resolve, reject) => {
+  Admin.getAdmin(event.adminId)
+  .then(admin => (resolve({ admin, event })))
+  .catch(reject);
+});
+
+/* Start archive
+* @param {String} id
+* @returns {Promise} <resolve: Event data, reject: Error>
+*/
+const startArchive = id => new Promise((resolve, reject) => {
+  getEvent(id)
+  .then(constructObj)
+  .then(({ admin, event }) => OpenTok.startArchive(admin.otApiKey, admin.otSecret, event.stageSessionId, event.name, event.composed))
+  .then(archiveId => update(id, { archiveId }))
+  .then(resolve)
+  .catch(reject);
+});
+
+
+/* Stop archive
+* @param {String} id
+* @returns {Promise} <resolve: Event data, reject: Error>
+*/
+const stopArchive = id => new Promise((resolve, reject) => {
+  getEvent(id)
+  .then(constructObj)
+  .then(({ admin, event }) => OpenTok.stopArchive(admin.otApiKey, admin.otSecret, event.archiveId))
+  .then(resolve)
+  .catch(reject);
 });
 
 /**
@@ -141,5 +196,8 @@ export {
   deleteEvent,
   getEvent,
   deleteEventsByAdminId,
-  getEventByPrimaryKey
+  getEventByPrimaryKey,
+  changeStatus,
+  startArchive,
+  stopArchive
 };

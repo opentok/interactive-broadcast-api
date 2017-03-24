@@ -10,19 +10,18 @@ const R = require('ramda');
 
 // apiKey => OT instance
 const OT = {};
-
+const testPortal = true;
 const defaultSessionOptions = { mediaMode: 'routed' };
 
 /**
  * Get the OT instance for a project (apiKey)
  * @param {String} apiKey
  * @param {String} apiSecret
- * @param {Boolean} test - Test portal?
  */
-const otInstance = (apiKey, apiSecret, test) => {
+const otInstance = (apiKey, apiSecret) => {
   if (OT[apiKey]) { return OT[apiKey]; }
   const tbrelUrl = 'https://anvil-tbrel.opentok.com';
-  const ot = test ?
+  const ot = testPortal ?
     new OpenTok(apiKey, apiSecret) :
     R.assocPath(
       ['_client', 'c', 'apiUrl'],
@@ -53,14 +52,45 @@ const createToken = (apiKey, apiSecret, sessionId, options) => {
  * @param {Object} options for the token creation
  * @returns {Promise} <Resolve => {Object}, Reject => {Error}>
  */
-const createSession = (apiKey, apiSecret, test) =>
+const createSession = (apiKey, apiSecret) =>
   new Promise((resolve, reject) => {
-    const ot = otInstance(apiKey, apiSecret, test);
+    const ot = otInstance(apiKey, apiSecret);
     const onCreate = (err, session) => (err ? reject(err) : resolve(session));
     ot.createSession(defaultSessionOptions, onCreate);
   });
 
+/**
+ * Starts the archiving and returns the archiveId
+ * @param {String} apiKey
+ * @param {String} apiSecret
+ * @param {String} sessionId
+ * @param {String} eventName
+ * @param {Boolean} composed
+ * @returns {Promise} <Resolve => {String}, Reject => {Error}>
+ */
+const startArchive = (apiKey, apiSecret, sessionId, eventName, composed) =>
+  new Promise((resolve, reject) => {
+    const ot = otInstance(apiKey, apiSecret);
+    const name = ['Archive', eventName, new Date().toISOString().slice(0, 10)].join(' ');
+    const outputMode = composed ? 'composed' : 'individual';
+    const archiveOptions = { name, outputMode };
+    ot.startArchive(sessionId, archiveOptions, (err, archive) => (err ? reject(err) : resolve(archive.id)));
+  });
+
+/**
+ * Starts the archiving and returns the archiveId
+ * @param {String} archiveId
+ * @returns {Promise} <Resolve => {Object}, Reject => {Error}>
+ */
+const stopArchive = (apiKey, apiSecret, archiveId) =>
+  new Promise((resolve, reject) => {
+    const ot = otInstance(apiKey, apiSecret);
+    ot.stopArchive(archiveId, err => (err ? reject(err) : resolve(true)));
+  });
+
 module.exports = {
   createSession,
-  createToken
+  createToken,
+  startArchive,
+  stopArchive
 };

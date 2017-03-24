@@ -33,6 +33,7 @@ const eventProps = [
   'sessionId',
   'stageSessionId',
   'archiveUrl',
+  'archiveId',
   'redirectUrl',
   'composed',
   'showStartedAt',
@@ -58,5 +59,6 @@ export {
   eventProps,
   timestampCreate,
   timestampUpdate,
-  eventStatuses
+  eventStatuses,
+  TS
 };
