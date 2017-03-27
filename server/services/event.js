@@ -85,7 +85,8 @@ const getSessions = async (admin) => {
 const create = async (data) => {
   const admin = await Admin.getAdmin(data.adminId);
   const sessions = await getSessions(admin);
-  return saveEvent(R.merge(data, sessions));
+  const status = eventStatuses.NON_STARTED;
+  return saveEvent(R.mergeAll([{ status }, data, sessions]));
 };
 
 /**
