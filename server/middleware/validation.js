@@ -18,14 +18,15 @@ const sendError = (res, error) => {
 const validateApiKey = (req, res, next) => {
   opentok.createSession(req.body.otApiKey, req.body.otSecret, true)
   .then(() => next())
-  .catch(R.partial(sendError, [res]));
+  .catch(R.partial(sendError, [res, 'Invalid APIKey or APISecret']));
 };
 
 const validateEvent = (req, res, next) => {
   const { adminId, fanUrl } = req.body;
+  const { id } = req.params;
   Admin.getAdmin(adminId)
-  .then(() => Event.getEventByPrimaryKey(adminId, fanUrl))
-  .then(event => (!event ? next() : sendError(res, 'Event exists')))
+  .then(() => Event.getEventByKey(adminId, fanUrl, 'fanUrl'))
+  .then(event => (!event || event.id === id ? next() : sendError(res, 'Event exists')))
   .catch(R.partial(sendError, [res]));
 };
 

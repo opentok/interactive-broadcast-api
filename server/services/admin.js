@@ -1,4 +1,3 @@
-const Promise = require('bluebird');
 const { db, admin } = require('./firebase');
 const R = require('ramda');
 const { adminProps, userProps, timestampCreate, timestampUpdate } = require('./dbProperties');
@@ -16,46 +15,41 @@ const buildAdmin = data => setDefaults(buildUser(adminProps, data));
  * Get the list of admins
  * @returns {Promise} <resolve: Admin List, reject: Error>
  */
-const getAdmins = () => new Promise((resolve, reject) => {
-  db.ref('admins').once('value')
-    .then(snapshot => resolve(snapshot.val()))
-    .catch(reject);
-});
+const getAdmins = async () => {
+  const snapshot = await db.ref('admins').once('value');
+  return snapshot.val();
+};
 
 /**
  * Get a particular Admin from firebase
  * @param {String} uid
  * @returns {Promise} <resolve: Admin data, reject: Error>
  */
-const getAdmin = uid => new Promise((resolve, reject) => {
-  db.ref('admins').child(uid).once('value')
-    .then(snapshot => resolve(snapshot.val()))
-    .catch(reject);
-});
+const getAdmin = async (uid) => {
+  const snapshot = await db.ref('admins').child(uid).once('value');
+  return snapshot.val();
+};
 
 /**
  * Create an admin
  * @param {String} uid
  * @returns {Promise} <resolve: Admin data, reject: Error>
  */
-const createAdmin = data => new Promise((resolve, reject) => {
+const createAdmin = async (data) => {
   const adminData = buildAdmin(R.merge(timestampCreate, data));
-  db.ref(`admins/${data.id}`).set(adminData)
-    .then(resolve(getAdmin(data.id)))
-    .catch(reject);
-});
+  db.ref(`admins/${data.id}`).set(adminData);
+  return getAdmin(data.id);
+};
 
 /**
  * Create an user in firebase-admin
  * @param {Object} admin data
  * @returns {Promise} <resolve: Admin data, reject: Error>
  */
-const createUser = data => new Promise((resolve, reject) => {
-  admin.auth().createUser(buildUser(userProps, data))
-    .then(authUser => createAdmin(R.merge({ id: authUser.uid }, data)))
-    .then(user => resolve(user))
-    .catch(reject);
-});
+const createUser = async (data) => {
+  const user = await admin.auth().createUser(buildUser(userProps, data));
+  return createAdmin(R.merge({ id: user.uid }, data));
+};
 
 /**
  * Update an user in firebase-admin
@@ -63,11 +57,10 @@ const createUser = data => new Promise((resolve, reject) => {
  * @param {Object} user <email, displayName>
  * @returns {Promise} <resolve: User data, reject: Error>
  */
-const updateUser = (uid, data) => new Promise((resolve, reject) => {
-  admin.auth().updateUser(uid, data)
-  .then(resolve(true))
-  .catch(reject);
-});
+const updateUser = async (uid, data) => {
+  await admin.auth().updateUser(uid, data);
+  return true;
+};
 
 /**
  * Update an admin
@@ -75,35 +68,32 @@ const updateUser = (uid, data) => new Promise((resolve, reject) => {
  * @param {Object} admin data: <otApiKey, otSecret, superAdmin, httpSupport, displayName, email>
  * @returns {Promise} <resolve: Admin data, reject: Error>
  */
-const updateAdmin = (uid, data) => new Promise((resolve, reject) => {
+const updateAdmin = async (uid, data) => {
   const adminData = buildAdmin(R.merge(timestampUpdate, data));
-  db.ref(`admins/${uid}`).update(adminData)
-    .then(updateUser(R.pick(['email', 'displayName'], data)))
-    .then(resolve(getAdmin(uid)))
-    .catch(reject);
-});
+  db.ref(`admins/${uid}`).update(adminData);
+  updateUser(R.pick(['email', 'displayName'], data));
+  return getAdmin(uid);
+};
 
 /**
  * Delete an admin in the DB
  * @param {String} uid
  */
-const deleteAdmin = uid => new Promise((resolve, reject) => {
-  db.ref(`admins/${uid}`).remove()
-    .then(resolve)
-    .catch(reject);
-});
+const deleteAdmin = async (uid) => {
+  db.ref(`admins/${uid}`).remove();
+  return true;
+};
 
 /**
  * Delete an user in firebase-admin
  * @param {String} uid
  */
-const deleteUser = uid => new Promise((resolve, reject) => {
-  admin.auth().deleteUser(uid)
-    .then(() => deleteAdmin(uid))
-    .then(() => Event.deleteEventsByAdminId(uid))
-    .then(() => resolve(true))
-    .catch(reject);
-});
+const deleteUser = async (uid) => {
+  await admin.auth().deleteUser(uid);
+  await deleteAdmin(uid);
+  await Event.deleteEventsByAdminId(uid);
+  return true;
+};
 
 export {
   getAdmins,

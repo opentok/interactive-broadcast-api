@@ -51,10 +51,34 @@ const eventStatus = {
   },
 };
 
+const createTokenFan = {
+  body: {
+    adminId: Joi.string().required(),
+    fanUrl: Joi.string().required(),
+  },
+};
+
+const createTokenHost = {
+  body: {
+    adminId: Joi.string().required(),
+    hostUrl: Joi.string().required(),
+  },
+};
+
+const createTokenCelebrity = {
+  body: {
+    adminId: Joi.string().required(),
+    celebrityUrl: Joi.string().required(),
+  },
+};
+
 export {
   login,
   createAdmin,
   updateAdmin,
   event,
-  eventStatus
+  eventStatus,
+  createTokenFan,
+  createTokenHost,
+  createTokenCelebrity,
 };

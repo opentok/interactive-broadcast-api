@@ -1,4 +1,3 @@
-const Promise = require('bluebird');
 const { db } = require('./firebase');
 const R = require('ramda');
 const { eventProps, timestampCreate, timestampUpdate, eventStatuses, TS } = require('./dbProperties');
@@ -19,63 +18,61 @@ const buildEvent = (props, eventData) => setDefaults(R.pick(props, eventData));
  * Get the list of admins
  * @returns {Promise} <resolve: Admin List, reject: Error>
  */
-const getEvents = (adminId = null) => new Promise((resolve, reject) => {
-  db.ref('events').orderByChild('adminId').equalTo(adminId).once('value')
-    .then(snapshot => resolve(snapshot.val()))
-    .catch(reject);
-});
+const getEvents = async (adminId = null) => {
+  const snapshot = await db.ref('events').orderByChild('adminId').equalTo(adminId).once('value');
+  return snapshot.val();
+};
 
 /**
  * Get a particular Event
  * @param {String} id
  * @returns {Promise} <resolve: Event data, reject: Error>
  */
-const getEvent = id => new Promise((resolve, reject) => {
-  db.ref('events').child(id).once('value')
-    .then(snapshot => resolve(snapshot.val()))
-    .catch(reject);
-});
+const getEvent = async (id) => {
+  const snapshot = await db.ref('events').child(id).once('value');
+  return snapshot.val();
+};
 
 /**
- * Get a particular Event
+ * Get a particular Event by primary key <slug, adminId>
  * @param {String} adminId
- * @param {String} fanUrl
+ * @param {String} slug <fanUrl OR hostUrl OR celebrityUrl>
  * @returns {Promise} <resolve: Event data, reject: Error>
  */
-const getEventByPrimaryKey = (adminId, fanUrl) => new Promise((resolve, reject) => {
-  const filterByAdmin = (snapshot) => {
+const getEventByKey = async (adminId, slug, field = 'fanUrl') => {
+  const filterByAdmin = (events) => {
     let event;
     R.forEachObjIndexed((s) => {
       if (s.adminId === adminId) event = s;
-    }, snapshot.val());
+    }, events);
     return event;
   };
-  db.ref('events').orderByChild('fanUrl').equalTo(fanUrl).once('value')
-    .then(filterByAdmin)
-    .then(resolve)
-    .catch(reject);
-});
+  const snapshot = await db.ref('events').orderByChild(field).equalTo(slug).once('value');
+  return filterByAdmin(snapshot.val());
+};
 
 /**
  * Create an event
  * @param {Object} event
  * @returns {Promise} <resolve: Event data, reject: Error>
  */
-const saveEvent = data => new Promise((resolve, reject) => {
+const saveEvent = async (data) => {
   const id = db.ref('events').push().key;
-  db.ref(`events/${id}`).set(buildEvent(eventProps, R.mergeAll([timestampCreate, { id }, data])))
-    .then(resolve(getEvent(id)))
-    .catch(reject);
-});
+  await db.ref(`events/${id}`).set(buildEvent(eventProps, R.mergeAll([timestampCreate, { id }, data])));
+  return await getEvent(id);
+};
 
-
-const getSessions = admin =>
-  new Promise((resolve, reject) => {
-    const createSession = OpenTok.createSession(admin.otApiKey, admin.otSecret);
-    Promise.all([createSession, createSession])
-      .then(sessions => resolve({ sessionId: sessions[0].sessionId, stageSessionId: sessions[1].sessionId }))
-      .catch(reject);
-  });
+/**
+ * Creates the backstage and onstage sessions for an event
+ * @param {Object} event
+ * @returns {Object} <sessionId, stageSessionId>
+ */
+const getSessions = async (admin) => {
+  const createSession = ({ otApiKey, otSecret }) => OpenTok.createSession(otApiKey, otSecret);
+  const session = await createSession(admin);
+  const stageSession = await createSession(admin);
+  return { sessionId: session.sessionId, stageSessionId: stageSession.sessionId };
+};
 
 /**
  * Save an appointment
@@ -85,14 +82,11 @@ const getSessions = admin =>
  * @param {String} data.user.email
  * @param {Object} data.appointment
  */
-const create = data =>
-  new Promise((resolve, reject) => {
-    Admin.getAdmin(data.adminId)
-      .then(getSessions)
-      .then(sessions => saveEvent(R.merge(data, sessions)))
-      .then(resolve)
-      .catch(reject);
-  });
+const create = async (data) => {
+  const admin = await Admin.getAdmin(data.adminId);
+  const sessions = await getSessions(admin);
+  return saveEvent(R.merge(data, sessions));
+};
 
 /**
  * Update an event
@@ -100,12 +94,10 @@ const create = data =>
  * @param {Object} eventData
  * @returns {Promise} <resolve: Event data, reject: Error>
  */
-const update = (id, data) => new Promise((resolve, reject) => {
-  db.ref(`events/${id}`).update(buildEvent(eventProps, R.merge(timestampUpdate, data)))
-    .then(resolve(getEvent(id)))
-    .catch(reject);
-});
-
+const update = async (id, data) => {
+  await db.ref(`events/${id}`).update(buildEvent(eventProps, R.merge(timestampUpdate, data)));
+  return getEvent(id);
+};
 
 /**
  * Change status
@@ -113,7 +105,7 @@ const update = (id, data) => new Promise((resolve, reject) => {
  * @param {Object} eventData
  * @returns {Promise} <resolve: Event data, reject: Error>
  */
-const changeStatus = (id, data) => new Promise((resolve, reject) => {
+const changeStatus = async (id, data) => {
   const updateData = data;
 
   if (data.status === eventStatuses.LIVE) {
@@ -121,59 +113,49 @@ const changeStatus = (id, data) => new Promise((resolve, reject) => {
   } else if (data.status === eventStatuses.CLOSED) {
     updateData.showEndedAt = TS;
   }
+  update(id, updateData);
+  return getEvent(id);
+};
 
-  update(id, updateData)
-  .then(resolve(getEvent(id)))
-  .catch(reject);
-});
-
-const constructObj = event => new Promise((resolve, reject) => {
-  Admin.getAdmin(event.adminId)
-  .then(admin => (resolve({ admin, event })))
-  .catch(reject);
-});
-
-/* Start archive
+/**
+* Start archive
 * @param {String} id
-* @returns {Promise} <resolve: Event data, reject: Error>
+* @returns archiveId
 */
-const startArchive = id => new Promise((resolve, reject) => {
-  getEvent(id)
-  .then(constructObj)
-  .then(({ admin, event }) => OpenTok.startArchive(admin.otApiKey, admin.otSecret, event.stageSessionId, event.name, event.composed))
-  .then(archiveId => update(id, { archiveId }))
-  .then(resolve)
-  .catch(reject);
-});
+const startArchive = async (id) => {
+  const event = await getEvent(id);
+  const admin = await Admin.getAdmin(event.adminId);
+  const archiveId = await OpenTok.startArchive(admin.otApiKey, admin.otSecret, event.stageSessionId, event.name, event.composed);
+  update(id, { archiveId });
+  return archiveId;
+};
 
-
-/* Stop archive
+/**
+* Stop archive
 * @param {String} id
-* @returns {Promise} <resolve: Event data, reject: Error>
+* @returns true
 */
-const stopArchive = id => new Promise((resolve, reject) => {
-  getEvent(id)
-  .then(constructObj)
-  .then(({ admin, event }) => OpenTok.stopArchive(admin.otApiKey, admin.otSecret, event.archiveId))
-  .then(resolve)
-  .catch(reject);
-});
+const stopArchive = async (id) => {
+  const event = await getEvent(id);
+  const admin = await Admin.getAdmin(event.adminId);
+  OpenTok.stopArchive(admin.otApiKey, admin.otSecret, event.archiveId);
+  return true;
+};
 
 /**
  * Delete an event
  * @param {String} id
  */
-const deleteEvent = id => new Promise((resolve, reject) => {
-  db.ref(`events/${id}`).remove()
-    .then(resolve(true))
-    .catch(reject);
-});
+const deleteEvent = async (id) => {
+  await db.ref(`events/${id}`).remove();
+  return true;
+};
 
 /**
  * Delete events by AdminId
  * @param {String} id
  */
-const deleteEventsByAdminId = id => new Promise((resolve, reject) => {
+const deleteEventsByAdminId = async (id) => {
   const ref = db.ref('events');
   const removeEvents = (snapshot) => {
     const updates = {};
@@ -183,11 +165,72 @@ const deleteEventsByAdminId = id => new Promise((resolve, reject) => {
     ref.update(updates);
   };
 
-  ref.orderByChild('adminId').equalTo(id).once('value')
-  .then(removeEvents)
-  .then(resolve)
-  .catch(reject);
-});
+  const snapshot = await ref.orderByChild('adminId').equalTo(id).once('value');
+  removeEvents(snapshot);
+  return true;
+};
+
+/**
+ * Create the tokens for the producer, and returns also the event data
+ * @param {String} eventId
+ * @returns {Object}
+ */
+const createTokenProducer = async (id) => {
+  const event = await getEvent(id);
+  const admin = await Admin.getAdmin(event.adminId);
+  const options = { role: OpenTok.otRoles.MODERATOR, data: 'userType=producer' };
+  const backstageToken = await OpenTok.createToken(admin.otApiKey, admin.otSecret, event.sessionId, options);
+  const stageToken = await OpenTok.createToken(admin.otApiKey, admin.otSecret, event.stageSessionId, options);
+  return {
+    apiKey: admin.otApiKey,
+    event,
+    backstageToken,
+    stageToken,
+  };
+};
+
+
+/**
+ * Create the tokens for the fan, and returns also the event data
+ * @param {String} fanUrl
+ * @param {String} AdminId
+ * @returns {Object}
+ */
+const createTokenFan = async (AdminId, slug) => {
+  const event = await getEventByKey(AdminId, slug, 'fanUrl');
+  const admin = await Admin.getAdmin(event.adminId);
+  const options = { role: OpenTok.otRoles.PUBLISHER, data: 'userType=fan' };
+  const backstageToken = await OpenTok.createToken(admin.otApiKey, admin.otSecret, event.sessionId, options);
+  const stageToken = await OpenTok.createToken(admin.otApiKey, admin.otSecret, event.stageSessionId, options);
+  return {
+    apiKey: admin.otApiKey,
+    event,
+    backstageToken,
+    stageToken,
+    httpSupport: admin.httpSupport
+  };
+};
+
+/**
+ * Create the token for the host or celebrity, and returns also the event data
+ * @param {String} adminId
+ * @param {String} slug
+ * @param {String} userType
+ * @returns {Object}
+ */
+const createTokenHostCeleb = async (AdminId, slug, userType) => {
+  const field = userType === 'host' ? 'hostUrl' : 'celebrityUrl';
+  const event = await getEventByKey(AdminId, slug, field);
+  const admin = await Admin.getAdmin(event.adminId);
+  const options = { role: OpenTok.otRoles.PUBLISHER, data: `userType=${userType}` };
+  const stageToken = await OpenTok.createToken(admin.otApiKey, admin.otSecret, event.stageSessionId, options);
+  return {
+    apiKey: admin.otApiKey,
+    event,
+    stageToken,
+    httpSupport: admin.httpSupport
+  };
+};
 
 export {
   getEvents,
@@ -196,8 +239,11 @@ export {
   deleteEvent,
   getEvent,
   deleteEventsByAdminId,
-  getEventByPrimaryKey,
+  getEventByKey,
   changeStatus,
   startArchive,
-  stopArchive
+  stopArchive,
+  createTokenProducer,
+  createTokenFan,
+  createTokenHostCeleb
 };

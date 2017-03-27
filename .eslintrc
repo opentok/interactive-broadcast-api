@@ -7,7 +7,6 @@
         "SwitchCase": 1
       }
     ],
-    "no-param-reassign": [2, { "props": false }],
     "max-len": [2, 150],
     "space-before-function-paren": [
       2,
@@ -39,7 +38,7 @@
     "mocha": true
   },
   "parserOptions": {
-    "ecmaVersion": 6,
+    "ecmaVersion": 8,
     "sourceType": "module"
   },
   "extends": [

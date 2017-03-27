@@ -88,9 +88,16 @@ const stopArchive = (apiKey, apiSecret, archiveId) =>
     ot.stopArchive(archiveId, err => (err ? reject(err) : resolve(true)));
   });
 
+const otRoles = {
+  MODERATOR: 'moderator',
+  PUBLISHER: 'publisher',
+  SUBSCRIBER: 'subscriber',
+};
+
 module.exports = {
   createSession,
   createToken,
   startArchive,
-  stopArchive
+  stopArchive,
+  otRoles
 };
