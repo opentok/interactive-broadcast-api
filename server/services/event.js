@@ -6,7 +6,7 @@ const OpenTok = require('./opentok');
 
 const setDefaults = (eventData) => {
   const setDefaultProps = {
-    status: R.defaultTo(eventStatuses.NON_STARTED),
+    status: R.defaultTo(eventStatuses.NOT_STARTED),
     archiveEvent: R.defaultTo(false),
     composed: R.defaultTo(false),
   };
@@ -85,7 +85,7 @@ const getSessions = async (admin) => {
 const create = async (data) => {
   const admin = await Admin.getAdmin(data.adminId);
   const sessions = await getSessions(admin);
-  const status = eventStatuses.NON_STARTED;
+  const status = eventStatuses.NOT_STARTED;
   return saveEvent(R.mergeAll([{ status }, data, sessions]));
 };
 

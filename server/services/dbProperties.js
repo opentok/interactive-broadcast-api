@@ -47,7 +47,7 @@ const timestampCreate = { createdAt: TS, updatedAt: TS };
 const timestampUpdate = { updatedAt: TS };
 
 const eventStatuses = {
-  NON_STARTED: 'nonStarted',
+  NOT_STARTED: 'notStarted',
   PRESHOW: 'preshow',
   LIVE: 'live',
   CLOSED: 'closed'

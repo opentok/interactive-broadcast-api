@@ -74,7 +74,7 @@ Refer [debug](https://www.npmjs.com/package/debug) to know how to selectively tu
 
 Tests:
 ```sh
-# Run tests written in ES6 
+# Run tests written in ES6
 yarn test
 
 # Run test along with code coverage
@@ -166,4 +166,3 @@ Your support is greatly appreciated.
 ## Meta
 
 Kunal Kapadia – [@kunalkapadia12](https://twitter.com/KunalKapadia12) – kunalkapadia12@gmail.com
-

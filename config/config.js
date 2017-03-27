@@ -1,4 +1,5 @@
 import Joi from 'joi';
+
 require('babel-polyfill');
 
 // require and configure dotenv, will load vars in .env in PROCESS.ENV
