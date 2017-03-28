@@ -34,6 +34,16 @@ const getEvent = async (id) => {
 };
 
 /**
+ * Get a particular Event by sessionId
+ * @param {String} sessionId
+ * @returns {Promise} <resolve: Event data, reject: Error>
+ */
+const getEventBySessionId = async (sessionId) => {
+  const snapshot = await db.ref('events').orderByChild('sessionId').equalTo(sessionId).once('value');
+  return R.values(snapshot.val())[0];
+};
+
+/**
  * Get a particular Event by primary key <slug, adminId>
  * @param {String} adminId
  * @param {String} slug <fanUrl OR hostUrl OR celebrityUrl>
@@ -86,7 +96,9 @@ const create = async (data) => {
   const admin = await Admin.getAdmin(data.adminId);
   const sessions = await getSessions(admin);
   const status = eventStatuses.NOT_STARTED;
-  return saveEvent(R.mergeAll([{ status }, data, sessions]));
+  const rtmpUrl = '';
+  const defaultValues = { status, rtmpUrl };
+  return saveEvent(R.mergeAll([defaultValues, data, sessions]));
 };
 
 /**
@@ -246,5 +258,6 @@ export {
   stopArchive,
   createTokenProducer,
   createTokenFan,
-  createTokenHostCeleb
+  createTokenHostCeleb,
+  getEventBySessionId
 };

@@ -39,6 +39,7 @@ const eventProps = [
   'showStartedAt',
   'showEndedAt',
   'adminId',
+  'rtmpUrl',
   'createdAt',
   'updatedAt'
 ];

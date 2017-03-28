@@ -50,6 +50,10 @@
     "morgan": "1.7.0",
     "opentok": "2.5.0",
     "ramda": "0.23.0",
+    "redis": "2.7.1",
+    "request": "2.81.0",
+    "socket.io": "1.7.3",
+    "underscore": "1.8.3",
     "validatorjs": "3.11.0",
     "winston": "2.3.0"
   },
