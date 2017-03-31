@@ -1,10 +1,13 @@
 /* eslint-env es6 */
+import R from 'ramda';
+import socketioJwt from 'socketio-jwt';
+import debounce from 'lodash.debounce';
 import config from '../../config/config';
+import { buildEventKey, createTokensFan } from './event';
 
-const { eventStatuses } = require('./dbProperties');
+const { eventStatuses, eventProps } = require('./dbProperties');
 const presence = require('./presence');
 const broadcast = require('./broadcast');
-const _ = require('underscore');
 
 /** Internal methods*/
 const sessionsToUpdate = new Map();
@@ -64,7 +67,7 @@ const updateBroadcast = connections => presence.updateConnections(connections);
  */
 const updateUsersCount = async (io) => {
   const activeConnections = presence.getActiveConnections();
-  activeConnections.forEach((connections, room) => {
+  activeConnections.interactive.forEach((connections, room) => {
     const users = `${connections} / ${config.interactiveStreamLimit}`;
     io.to(`${room}-producer`).emit('updateInteractiveUsers', users);
   });
@@ -77,7 +80,7 @@ const updateUsersCount = async (io) => {
  * in the broadcast service, get the number of active connections to each socket.io room and provide those counts.
  * We're currently limiting this action to once every 500 ms.
  */
-const updateBroadcastSessions = _.debounce(_.compose(updateBroadcast, getActiveConnections, getAllRooms), 500, true);
+const updateBroadcastSessions = debounce(R.compose(updateBroadcast, getActiveConnections, getAllRooms), 500, true);
 
 /** Exports */
 
@@ -89,7 +92,12 @@ const updateBroadcastSessions = _.debounce(_.compose(updateBroadcast, getActiveC
 const initWebsocketServer = (httpServer) => {
   const io = require('socket.io')(httpServer); // eslint-disable-line global-require
 
-  io.on('connection', (socket) => {
+  io.on('connection', socketioJwt.authorize({
+    secret: config.jwtSecret,
+    timeout: 15000 // 15 seconds to send the authentication message
+  }));
+
+  io.on('authenticated', (socket) => {
     socket.emit('serverConnected');
 
     // Original signals
@@ -103,41 +111,51 @@ const initWebsocketServer = (httpServer) => {
     );
 
     // Presence and broadcast
-    socket.on('joinInteractive', async (room) => {
-      const emitAbleToJoin = (ableToJoin, broadcastData) => {
+    socket.on('joinInteractive', async ({ fanUrl, adminId }) => {
+      const emitAbleToJoin = ({ ableToJoin, broadcastData, eventData }) => {
         socket.emit('ableToJoin', {
           ableToJoin,
-          broadcastData
+          broadcastData,
+          eventData
         });
       };
 
-      const ableToJoin = presence.ableToJoinInteractiveBySession(room);
-      const { hls } = await presence.getInteractiveSessionData(room);
-      if (hls && !ableToJoin) {
+      const { ableToJoin, eventData } = await presence.ableToJoinInteractive(fanUrl, adminId);
+      const credentials = ableToJoin ?
+        await createTokensFan(eventData.otApiKey, eventData.otSecret, eventData.stageSessionId, eventData.sessionId) : {};
+      const response = { ableToJoin, eventData: R.merge(credentials, R.pick(eventProps, eventData)) };
+
+      // get the broadcast data if hls is enabled
+      if (eventData.hls) {
         try {
-          const { broadcastUrl, broadcastId, eventLive } = await broadcast.getBroadcastData({ sessionId: room });
-          emitAbleToJoin(ableToJoin, { broadcastUrl, broadcastId, eventLive });
+          response.broadcastData = await broadcast.getBroadcastData({ fanUrl, adminId });
         } catch (error) {
-          emitAbleToJoin(false, null);
+          emitAbleToJoin({
+            ableToJoin: false,
+            broadcastData: null,
+            eventData: null
+          });
+          return;
         }
-      } else {
-        emitAbleToJoin(ableToJoin, null);
       }
 
+      emitAbleToJoin(response);
+
       if (ableToJoin) {
-        socket.join(room);
+        socket.join(buildEventKey(fanUrl, adminId));
         updateBroadcastSessions(io);
         updateUsersCount(io);
       }
     });
 
     socket.on('producerJoinRoom', (data) => {
-      socket.join(`${data.sessionId}-producer`);
-      presence.setSessionData(data);
+      const eventKey = buildEventKey(data.fanUrl, data.adminId);
+      socket.join(`${eventKey}-producer`);
+      presence.setEventData(data);
       updateUsersCount(io);
-      if (sessionsToUpdate.has(data.sessionId)) {
-        io.emit('changeStatus', sessionsToUpdate.get(data.sessionId));
-        sessionsToUpdate.delete(data.sessionId);
+      if (sessionsToUpdate.has(eventKey)) {
+        io.emit('changeStatus', sessionsToUpdate.get(eventKey));
+        sessionsToUpdate.delete(eventKey);
       }
     });
 
@@ -149,7 +167,8 @@ const initWebsocketServer = (httpServer) => {
     // Event with HLS on ended
     socket.on('eventEnded', async (data) => {
       if (data.broadcastEnabled) {
-        const broadcastData = await broadcast.getBroadcastData({ sessionId: data.broadcastSession });
+        const { fanUrl, adminId } = data;
+        const broadcastData = await broadcast.getBroadcastData({ fanUrl, adminId });
         const room = `broadcast${broadcastData.broadcastId}`;
         io.to(room).emit('eventEnded');
 

@@ -5,6 +5,7 @@ import redis from 'redis';
 import jwt from 'jsonwebtoken';
 import request from 'request';
 import config from '../../config/config';
+import { buildEventKey } from './event';
 
 const presence = require('./presence');
 
@@ -58,27 +59,27 @@ const ensureHTTPS = url => (url.startsWith('https') ? url : `https${url.slice(4)
 /** Create token auth **/
 const createToken = (ot) => {
   const options = {
-    issuer: ot.apiKey,
+    issuer: ot.otApiKey,
     expiresIn: '1m',
   };
-  return jwt.sign({ ist: 'project' }, ot.apiSecret, options);
+  return jwt.sign({ ist: 'project' }, ot.otSecret, options);
 };
 
 /** Exports */
 
 /**
  * Clean up local storage and redis after broadcast ends
- * @param {String} sessionId - The broadcast session id
+ * @param {String} eventKey - The eventKey
  * @param {String} broadcastId - The broadcast id
  * @param [Boolean] now - Clean up immediately
  */
-const scheduleCleanup = (sessionId, broadcastId, now) => {
+const scheduleCleanup = (eventKey, broadcastId, now) => {
   const cleanUp = () => {
-    if (!activeBroadcasts.has(sessionId)) return;
+    if (!activeBroadcasts.has(eventKey)) return;
     // Active broadcasts
-    activeBroadcasts.delete(sessionId);
+    activeBroadcasts.delete(eventKey);
     // Redis
-    client.del(`broadcast-${sessionId}`);
+    client.del(`broadcast-${eventKey}`);
   };
   // Broadcasts automatically end 120 minutes after they begin
   const delay = now ? 0 : (1000 * 60 * 120);
@@ -87,25 +88,27 @@ const scheduleCleanup = (sessionId, broadcastId, now) => {
 
 /**
  * Start the broadcast, update in-memory and redis data, and schedule cleanup
- * @param {String} broadcastSessionId - Spotlight host session id
+ * @param {String} fanUrl - fanUrl
+ * @param {String} adminId - adminId
  * @returns {Promise} <Resolve => {Object} Broadcast data, Reject => {Error}>
  */
-const startBroadcast = async (broadcastSessionId) => {
+const startBroadcast = async (fanUrl, adminId) => {
+  const eventKey = buildEventKey(fanUrl, adminId);
   try {
-    const { apiKey, apiSecret, rtmpUrl } = await presence.getInteractiveSessionData(broadcastSessionId);
-    const token = createToken({ apiKey, apiSecret });
+    const { otApiKey, otSecret, rtmpUrl, stageSessionId } = await presence.getInteractiveEventData(fanUrl, adminId);
+    const token = createToken({ otApiKey, otSecret });
     const requestConfig = {
       headers: {
         'Content-Type': 'application/json',
         'X-OPENTOK-AUTH': `${token}` },
-      url: broadcastURL(apiKey),
-      body: broadcastBody(broadcastSessionId, rtmpUrl)
+      url: broadcastURL(otApiKey),
+      body: broadcastBody(stageSessionId, rtmpUrl)
     };
     const response = await request.postAsync(requestConfig);
     const data = JSON.parse(response.body);
     if (data.id) {
       const broadcastData = {
-        broadcastSession: broadcastSessionId,
+        broadcastSession: stageSessionId,
         broadcastUrl: rtmpUrl || ensureHTTPS(data.broadcastUrls.hls),
         rtmpUrl,
         broadcastId: data.id,
@@ -114,17 +117,17 @@ const startBroadcast = async (broadcastSessionId) => {
         eventLive: 'false'
       };
 
-      // Broadcasts are stored according to broadcastSessionId => {broadcastSessionId: {broadcastData}}
-      client.hmsetAsync(`broadcast-${broadcastSessionId}`, broadcastData);
-      activeBroadcasts.add(broadcastSessionId);
-      scheduleCleanup(broadcastSessionId, broadcastData.broadcastId);
+      // Broadcasts are stored according to eventKey => {eventKey: {broadcastData}}
+      client.hmsetAsync(`broadcast-${eventKey}`, broadcastData);
+      activeBroadcasts.add(eventKey);
+      scheduleCleanup(eventKey, broadcastData.broadcastId);
       return broadcastData;
     }
 
     return null;
   } catch (error) {
     if (error.status === 409) {
-      return await client.hgetallAsync(broadcastSessionId);
+      return await client.hgetallAsync(eventKey);
     }
     return error;
   }
@@ -136,16 +139,17 @@ const startBroadcast = async (broadcastSessionId) => {
  * @returns {Promise} <Resolve => {Object} Broadcast data, Reject => {Error}>
  */
 const getBroadcastData = async (identifier) => {
-  const sessionId = identifier.sessionId;
+  const { fanUrl, adminId } = identifier;
+  const eventKey = buildEventKey(fanUrl, adminId);
   /**
    * Check redis to see if we've already started the broadcast.
    * If there isn't any data in redis, we need to make a call to
    * the broadcast api to get the info and start the broadcast stream.
    */
-  if (sessionId) {
-    let broadcastData = await client.hgetallAsync(`broadcast-${sessionId}`);
+  if (fanUrl && adminId) {
+    let broadcastData = await client.hgetallAsync(`broadcast-${eventKey}`);
     if (!broadcastData) {
-      broadcastData = await startBroadcast(sessionId);
+      broadcastData = await startBroadcast(fanUrl, adminId);
     }
     return broadcastData;
   }
@@ -158,13 +162,13 @@ const getBroadcastData = async (identifier) => {
  * @param {String} broadcastId
  */
 const endBroadcast = async (broadcastId, broadcastSession) => {
-  const { apiKey, apiSecret } = await presence.getInteractiveSessionData(broadcastSession);
-  const token = createToken({ apiKey, apiSecret });
+  const { otApiKey, otSecret } = await presence.getInteractiveEventData(broadcastSession);
+  const token = createToken({ otApiKey, otSecret });
   const requestConfig = {
     headers: {
       'Content-Type': 'application/json',
       'X-OPENTOK-AUTH': `${token}` },
-    url: stopBroadcastURL(broadcastId, broadcastURL(apiKey))
+    url: stopBroadcastURL(broadcastId, broadcastURL(otApiKey))
   };
 
   const sendEndRequest = async () => {

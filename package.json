@@ -46,6 +46,7 @@
     "http-status": "^0.2.0",
     "joi": "10.0.6",
     "jsonwebtoken": "7.1.9",
+    "lodash.debounce": "4.0.8",
     "method-override": "^2.3.5",
     "morgan": "1.7.0",
     "opentok": "2.5.0",
@@ -53,7 +54,7 @@
     "redis": "2.7.1",
     "request": "2.81.0",
     "socket.io": "1.7.3",
-    "underscore": "1.8.3",
+    "socketio-jwt": "4.5.0",
     "validatorjs": "3.11.0",
     "winston": "2.3.0"
   },

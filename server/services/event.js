@@ -50,15 +50,10 @@ const getEventBySessionId = async (sessionId) => {
  * @returns {Promise} <resolve: Event data, reject: Error>
  */
 const getEventByKey = async (adminId, slug, field = 'fanUrl') => {
-  const filterByAdmin = (events) => {
-    let event;
-    R.forEachObjIndexed((s) => {
-      if (s.adminId === adminId) event = s;
-    }, events);
-    return event;
-  };
   const snapshot = await db.ref('events').orderByChild(field).equalTo(slug).once('value');
-  return filterByAdmin(snapshot.val());
+  const events = Object.values(snapshot.val());
+  // Filtering by adminId
+  return R.find(R.propEq('adminId', adminId))(events);
 };
 
 /**
@@ -79,9 +74,13 @@ const saveEvent = async (data) => {
  */
 const getSessions = async (admin) => {
   const createSession = ({ otApiKey, otSecret }) => OpenTok.createSession(otApiKey, otSecret);
-  const session = await createSession(admin);
-  const stageSession = await createSession(admin);
-  return { sessionId: session.sessionId, stageSessionId: stageSession.sessionId };
+  try {
+    const session = await createSession(admin);
+    const stageSession = await createSession(admin);
+    return { sessionId: session.sessionId, stageSessionId: stageSession.sessionId };
+  } catch (error) {
+    return new Error('error creating sessions', error);
+  }
 };
 
 /**
@@ -202,25 +201,30 @@ const createTokenProducer = async (id) => {
   };
 };
 
+const createTokensFan = async (otApiKey, otSecret, stageSessionId, sessionId) => {
+  const options = { role: OpenTok.otRoles.PUBLISHER, data: 'userType=fan' };
+  const backstageToken = await OpenTok.createToken(otApiKey, otSecret, sessionId, options);
+  const stageToken = await OpenTok.createToken(otApiKey, otSecret, stageSessionId, options);
+  return { backstageToken, stageToken };
+};
+
 
 /**
  * Create the tokens for the fan, and returns also the event data
  * @param {String} fanUrl
- * @param {String} AdminId
+ * @param {String} adminId
  * @returns {Object}
  */
-const createTokenFan = async (AdminId, slug) => {
-  const event = await getEventByKey(AdminId, slug, 'fanUrl');
-  const admin = await Admin.getAdmin(event.adminId);
-  const options = { role: OpenTok.otRoles.PUBLISHER, data: 'userType=fan' };
-  const backstageToken = await OpenTok.createToken(admin.otApiKey, admin.otSecret, event.sessionId, options);
-  const stageToken = await OpenTok.createToken(admin.otApiKey, admin.otSecret, event.stageSessionId, options);
+const createTokenFan = async (adminId, slug) => {
+  const event = await getEventByKey(adminId, slug, 'fanUrl');
+  const { otApiKey, otSecret, httpSupport } = await Admin.getAdmin(event.adminId);
+  const { backstageToken, stageToken } = createTokensFan(otApiKey, otSecret, event.stageSessionId, event.sessionId);
   return {
-    apiKey: admin.otApiKey,
+    apiKey: otApiKey,
     event,
     backstageToken,
     stageToken,
-    httpSupport: admin.httpSupport
+    httpSupport
   };
 };
 
@@ -231,9 +235,9 @@ const createTokenFan = async (AdminId, slug) => {
  * @param {String} userType
  * @returns {Object}
  */
-const createTokenHostCeleb = async (AdminId, slug, userType) => {
+const createTokenHostCeleb = async (adminId, slug, userType) => {
   const field = userType === 'host' ? 'hostUrl' : 'celebrityUrl';
-  const event = await getEventByKey(AdminId, slug, field);
+  const event = await getEventByKey(adminId, slug, field);
   const admin = await Admin.getAdmin(event.adminId);
   const options = { role: OpenTok.otRoles.PUBLISHER, data: `userType=${userType}` };
   const stageToken = await OpenTok.createToken(admin.otApiKey, admin.otSecret, event.stageSessionId, options);
@@ -244,6 +248,8 @@ const createTokenHostCeleb = async (AdminId, slug, userType) => {
     httpSupport: admin.httpSupport
   };
 };
+
+const buildEventKey = (fanUrl, adminId) => [fanUrl, adminId].join('-');
 
 export {
   getEvents,
@@ -259,5 +265,7 @@ export {
   createTokenProducer,
   createTokenFan,
   createTokenHostCeleb,
-  getEventBySessionId
+  getEventBySessionId,
+  buildEventKey,
+  createTokensFan
 };

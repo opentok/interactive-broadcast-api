@@ -10,7 +10,7 @@ const R = require('ramda');
 
 // apiKey => OT instance
 const OT = {};
-const testPortal = true;
+const testPortal = false;
 const defaultSessionOptions = { mediaMode: 'routed' };
 
 /**
@@ -21,7 +21,7 @@ const defaultSessionOptions = { mediaMode: 'routed' };
 const otInstance = (apiKey, apiSecret) => {
   if (OT[apiKey]) { return OT[apiKey]; }
   const tbrelUrl = 'https://anvil-tbrel.opentok.com';
-  const ot = testPortal ?
+  const ot = !testPortal ?
     new OpenTok(apiKey, apiSecret) :
     R.assocPath(
       ['_client', 'c', 'apiUrl'],

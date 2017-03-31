@@ -1,6 +1,7 @@
 /** Imports */
+import R from 'ramda';
 import config from '../../config/config';
-import { getEventByKey, getEventBySessionId } from './event';
+import { getEventByKey, buildEventKey } from './event';
 import { getAdmin } from './admin';
 
 /** Constants */
@@ -14,10 +15,13 @@ const interactiveStreamLimit = config.interactiveStreamLimit;
  * For interactive sessions, the connectionId is the host session id.
  * */
 
-const activeConnections = new Map();
+const activeConnections = {
+  interactive: new Map(),
+  broadcast: new Map()
+};
 
 /** { hostSessionId => data }  */
-const sessionData = new Map();
+const eventData = new Map();
 
 /** { hostSessionId => fanUrl }  */
 const EventKeysBySessionId = new Map();
@@ -30,72 +34,40 @@ const EventKeysBySessionId = new Map();
  * @param {Map} connections {id => connection}
  */
 const updateEmptySessions = (connections) => {
-  activeConnections.forEach((count, connectionId) => {
-    if (!connections.has(connectionId)) {
-      activeConnections.set(connectionId, 0);
-    }
+  Object.keys(activeConnections).forEach((type) => {
+    activeConnections[type].forEach((count, connectionId) => {
+      if (!connections.has(connectionId)) {
+        activeConnections[type].set(connectionId, 0);
+      }
+    });
   });
-};
-
-/**
- * Returns the host session id associated with a fan url
- * @param {String} fanUrl
- * @param {String} adminId
- * @returns {String}
- */
-const getInteractiveSession = async (fanUrl, adminId) => {
-  const eventKey = [fanUrl, adminId].join('-');
-  if (sessionData.has(eventKey)) {
-    return sessionData.get(eventKey);
-  }
-
-  const event = await getEventByKey(adminId, fanUrl, 'fanUrl');
-  const admin = await getAdmin(event.adminId);
-  const data = {
-    sessionId: event.sessionId,
-    eventName: event.name,
-    eventImage: event.startImage,
-    apiKey: admin.otApiKey,
-    apiSecret: admin.otSecret,
-    hls: admin.hls
-  };
-  sessionData.set(eventKey, data);
-  EventKeysBySessionId.set(event.sessionId, eventKey);
-  return data;
 };
 
 /** Exports */
 
 /** How many fans are connected to the session */
-const getActiveCount = sessionId => activeConnections.get(sessionId) || 0;
+const getActiveCount = eventKey => activeConnections.interactive.get(eventKey) || 0;
 
 const getActiveConnections = () => activeConnections;
 
 /**
- * Returns the session Data associated with a session Id
- * @param {String} sessionId
+ * Returns the event data associated with a fanUrl and adminId
+ * @param {String} fanUrl
+ * @param {String} adminId
  * @returns {String}
  */
-const getInteractiveSessionData = async (sessionId) => {
-  if (EventKeysBySessionId.has(sessionId)) {
-    const eventKey = EventKeysBySessionId.get(sessionId);
-    return sessionData.get(eventKey);
-  }
-  const event = await getEventBySessionId(sessionId);
-  const admin = await getAdmin(event.adminId);
-  const eventKey = [event.fanUrl, event.adminId].join('-');
-  const data = {
-    sessionId: event.sessionId,
-    eventName: event.name,
-    eventImage: event.startImage,
-    apiKey: admin.otApiKey,
-    apiSecret: admin.otSecret,
-    rtmpUrl: event.rtmpUrl,
-    hls: admin.hls
+const getInteractiveEventData = async (fanUrl, adminId) => {
+  const eventKey = buildEventKey(fanUrl, adminId);
+
+  const getEventData = async () => {
+    const event = await getEventByKey(adminId, fanUrl, 'fanUrl');
+    const { otApiKey, otSecret, hls, httpSupport } = await getAdmin(event.adminId);
+    const data = R.merge({ otApiKey, otSecret, hls, httpSupport }, event);
+    eventData.set(eventKey, data);
+    return data;
   };
-  sessionData.set(eventKey, data);
-  EventKeysBySessionId.set(sessionId, eventKey);
-  return data;
+
+  return eventData.has(eventKey) ? eventData.get(eventKey) : await getEventData();
 };
 
 /**
@@ -103,8 +75,7 @@ const getInteractiveSessionData = async (sessionId) => {
  * @param {String} sessionId - The room
  * @returns {Boolean}
  */
-const ableToJoinInteractiveBySession = sessionId => getActiveCount(sessionId) < interactiveStreamLimit;
-
+const ableToJoinInteractiveByEventKey = eventKey => getActiveCount(eventKey) < interactiveStreamLimit;
 /**
  *
  * @param {String} fanUrl - The url for the show the fan is trying to join
@@ -113,13 +84,11 @@ const ableToJoinInteractiveBySession = sessionId => getActiveCount(sessionId) < 
  * @returns {Promise} <Resolve => {Boolean}, Reject => {Error}>
  */
 const ableToJoinInteractive = async (fanUrl, adminId) => {
-  const { sessionId, eventImage, eventName } = await getInteractiveSession(fanUrl, adminId);
-  const ableToJoin = ableToJoinInteractiveBySession(sessionId);
+  const data = await getInteractiveEventData(fanUrl, adminId);
+  const ableToJoin = ableToJoinInteractiveByEventKey(buildEventKey(fanUrl, adminId));
   return {
     ableToJoin,
-    sessionId,
-    eventImage,
-    eventName
+    eventData: data
   };
 };
 
@@ -137,7 +106,7 @@ const updateConnections = (connections) => {
 
   connections.forEach((connection) => {
     // Update connection count
-    activeConnections.set(connection.id, connection.connections);
+    activeConnections[connection.type].set(connection.id, connection.connections);
   });
 };
 
@@ -147,27 +116,27 @@ const updateConnections = (connections) => {
  */
 const removeLocalStorage = (sessionId) => {
   const eventKey = EventKeysBySessionId.get(sessionId);
-  // Remove sessionData
-  sessionData.delete(eventKey);
+  // Remove eventData
+  eventData.delete(eventKey);
   EventKeysBySessionId.delete(sessionId);
   activeConnections.interactive.delete(sessionId);
 };
 
-const setSessionData = (data) => {
-  if (!sessionData.has(data.eventKey)) {
-    sessionData.set(data.eventKey, data);
+const setEventData = (data) => {
+  if (!eventData.has(data.eventKey)) {
+    eventData.set(data.eventKey, data);
     EventKeysBySessionId.set(data.sessionId, data.eventKey);
   }
-  return sessionData.get(data.eventKey);
+  return eventData.get(data.eventKey);
 };
 
 export default {
-  setSessionData,
-  ableToJoinInteractiveBySession,
+  setEventData,
+  ableToJoinInteractiveByEventKey,
   getActiveCount,
   ableToJoinInteractive,
   updateConnections,
   removeLocalStorage,
   getActiveConnections,
-  getInteractiveSessionData
+  getInteractiveEventData
 };

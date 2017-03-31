@@ -32,5 +32,4 @@ router.post('/create-token-fan', validate(paramValidation.createTokenFan), creat
 router.post('/create-token-host', validate(paramValidation.createTokenHost), createTokenHostCeleb('host'));
 router.post('/create-token-celebrity', validate(paramValidation.createTokenCelebrity), createTokenHostCeleb('celebrity'));
 router.delete('/:id', deleteEvent);
-
 export default router;
