@@ -1,5 +1,7 @@
 import httpStatus from 'http-status';
 import R from 'ramda';
+import jwt from 'jsonwebtoken';
+import config from '../../config/config';
 import opentok from '../services/opentok';
 import APIError from '../helpers/APIError';
 
@@ -14,6 +16,19 @@ const sendError = (res, error) => {
   const { status, message, code } = validationError;
   res.status(status).send({ message, code });
 };
+
+const checkRole = (role, req, res, next) => {
+  const token = req.headers.authorization.replace('Bearer ', '');
+  jwt.verify(token, config.jwtSecret, (err, decoded) => {
+    if (decoded.role === role) {
+      next();
+    } else {
+      sendError(res, { message: 'Authentication error', status: httpStatus.UNAUTHORIZED });
+    }
+  });
+};
+
+/* Exports */
 
 const validateApiKey = (req, res, next) => {
   opentok.createSession(req.body.otApiKey, req.body.otSecret, true)
@@ -30,8 +45,14 @@ const validateEvent = (req, res, next) => {
   .catch(R.partial(sendError, [res]));
 };
 
+const checkAdmin = (req, res, next) => checkRole('admin', req, res, next);
+const checkFan = (req, res, next) => checkRole('fan', req, res, next);
+const checkCelebHost = (req, res, next) => checkRole('celebhost', req, res, next);
 
 module.exports = {
   validateApiKey,
-  validateEvent
+  validateEvent,
+  checkAdmin,
+  checkFan,
+  checkCelebHost
 };

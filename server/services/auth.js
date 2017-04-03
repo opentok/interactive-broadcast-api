@@ -2,6 +2,14 @@ import jwt from 'jsonwebtoken';
 import httpStatus from 'http-status';
 import APIError from '../helpers/APIError';
 import config from '../../config/config';
+import { getEventByKey } from './event';
+import { verifyIdToken } from './firebase';
+
+const roles = {
+  ADMIN: 'admin',
+  FAN: 'fan',
+  CELEBHOST: 'celebhost',
+};
 
 /**
  * Returns jwt token if valid username and password is provided
@@ -10,11 +18,35 @@ import config from '../../config/config';
  * @param next
  * @returns {*}
  */
-const login = (req, res, next) => {
-  const uid = req.body.uid;
-  if (uid !== '') {
+const login = async (req, res, next) => {
+  const idToken = req.body.idToken;
+  const uid = await verifyIdToken(idToken);
+  if (uid) {
     const token = jwt.sign({
-      uid
+      uid,
+      role: roles.ADMIN
+    }, config.jwtSecret);
+    return res.json({ token });
+  }
+  const err = new APIError('Authentication error', httpStatus.UNAUTHORIZED, true);
+  return next(err);
+};
+
+/**
+ * Returns jwt token if valid username and password is provided
+ * @param req
+ * @param res
+ * @param next
+ * @returns {*}
+ */
+const loginFan = async (req, res, next) => {
+  const { fanUrl, adminId } = req.body;
+  const event = await getEventByKey(adminId, fanUrl, 'fanUrl');
+  if (event) {
+    const token = jwt.sign({
+      fanUrl,
+      adminId,
+      role: roles.FAN,
     }, config.jwtSecret);
     return res.json({ token });
   }
@@ -23,4 +55,56 @@ const login = (req, res, next) => {
   return next(err);
 };
 
-export default { login };
+/**
+ * Returns jwt token if valid username and password is provided
+ * @param req
+ * @param res
+ * @param next
+ * @returns {*}
+ */
+const loginHost = async (req, res, next) => {
+  const { hostUrl, adminId } = req.body;
+  const event = await getEventByKey(adminId, hostUrl, 'hostUrl');
+  if (event) {
+    const token = jwt.sign({
+      hostUrl,
+      adminId,
+      role: roles.CELEBHOST,
+    }, config.jwtSecret);
+    return res.json({ token });
+  }
+
+  const err = new APIError('Authentication error', httpStatus.UNAUTHORIZED, true);
+  return next(err);
+};
+
+/**
+ * Returns jwt token if valid username and password is provided
+ * @param req
+ * @param res
+ * @param next
+ * @returns {*}
+ */
+const loginCelebrity = async (req, res, next) => {
+  const { celebrityUrl, adminId } = req.body;
+  const event = await getEventByKey(adminId, celebrityUrl, 'celebrityUrl');
+  if (event) {
+    const token = jwt.sign({
+      celebrityUrl,
+      adminId,
+      role: roles.CELEBHOST,
+    }, config.jwtSecret);
+    return res.json({ token });
+  }
+
+  const err = new APIError('Authentication error', httpStatus.UNAUTHORIZED, true);
+  return next(err);
+};
+
+export default {
+  login,
+  loginFan,
+  loginHost,
+  loginCelebrity,
+  roles
+};

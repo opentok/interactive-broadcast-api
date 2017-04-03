@@ -3,9 +3,30 @@ import R from 'ramda';
 
 const { eventStatuses } = require('../server/services/dbProperties');
 
-const login = {
+const jwtAdmin = {
   body: {
-    uid: Joi.string().required()
+    idToken: Joi.string().required()
+  }
+};
+
+const jwtFan = {
+  body: {
+    fanUrl: Joi.string().required(),
+    adminId: Joi.string().required(),
+  }
+};
+
+const jwtHost = {
+  body: {
+    hostUrl: Joi.string().required(),
+    adminId: Joi.string().required(),
+  }
+};
+
+const jwtCelebrity = {
+  body: {
+    celebrityUrl: Joi.string().required(),
+    adminId: Joi.string().required(),
   }
 };
 
@@ -73,7 +94,7 @@ const createTokenCelebrity = {
 };
 
 export {
-  login,
+  jwtAdmin,
   createAdmin,
   updateAdmin,
   event,
@@ -81,4 +102,7 @@ export {
   createTokenFan,
   createTokenHost,
   createTokenCelebrity,
+  jwtFan,
+  jwtHost,
+  jwtCelebrity
 };

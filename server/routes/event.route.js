@@ -5,7 +5,7 @@ const router = express.Router(); // eslint-disable-line new-cap
 const Event = require('../services/event');
 const getAPIResponse = require('../helpers/APIResponse');
 const paramValidation = require('../../config/param-validation');
-const { validateEvent } = require('../middleware/validation');
+const { validateEvent, checkAdmin, checkFan, checkCelebHost } = require('../middleware/validation');
 
 const getEvents = getAPIResponse(req => Event.getEvents(req.query.adminId), { skipNotFoundValidation: true });
 const getMostRecentEvent = getAPIResponse(req => Event.getMostRecentEvent(req.query.adminId));
@@ -25,16 +25,16 @@ const createTokenByUserType = getAPIResponse(req => Event.createTokenByUserType(
 router.get('/', getEvents);
 router.get('/get-current-admin-event', getMostRecentEvent);
 router.get('/:id', getEventById);
-router.post('/', validate(paramValidation.event), validateEvent, createEvent);
-router.patch('/:id', validate(paramValidation.event), validateEvent, updateEvent);
-router.put('/change-status/:id', validate(paramValidation.eventStatus), changeStatus);
-router.post('/start-archive/:id', startArchive);
-router.post('/stop-archive/:id', stopArchive);
-router.post('/create-token-producer/:id', createTokenProducer);
-router.post('/create-token-fan', validate(paramValidation.createTokenFan), createTokenFan);
-router.post('/create-token-host', validate(paramValidation.createTokenHost), createTokenHostCeleb('host'));
-router.post('/create-token-celebrity', validate(paramValidation.createTokenCelebrity), createTokenHostCeleb('celebrity'));
-router.post('/create-token/:adminId/:userType', createTokenByUserType);
+router.post('/', checkAdmin, validate(paramValidation.event), validateEvent, createEvent);
+router.patch('/:id', checkAdmin, validate(paramValidation.event), validateEvent, updateEvent);
+router.put('/change-status/:id', checkAdmin, validate(paramValidation.eventStatus), changeStatus);
+router.post('/start-archive/:id', checkAdmin, startArchive);
+router.post('/stop-archive/:id', checkAdmin, stopArchive);
+router.post('/create-token-producer/:id', checkAdmin, createTokenProducer);
+router.post('/create-token-fan', checkFan, validate(paramValidation.createTokenFan), createTokenFan);
+router.post('/create-token-host', checkCelebHost, validate(paramValidation.createTokenHost), createTokenHostCeleb('host'));
+router.post('/create-token-celebrity', checkCelebHost, validate(paramValidation.createTokenCelebrity), createTokenHostCeleb('celebrity'));
+router.post('/create-token/:adminId/:userType', checkCelebHost, createTokenByUserType);
 
 router.delete('/:id', deleteEvent);
 export default router;
