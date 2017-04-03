@@ -8,6 +8,7 @@ const paramValidation = require('../../config/param-validation');
 const { validateEvent } = require('../middleware/validation');
 
 const getEvents = getAPIResponse(req => Event.getEvents(req.query.adminId), { skipNotFoundValidation: true });
+const getMostRecentEvent = getAPIResponse(req => Event.getMostRecentEvent(req.query.adminId));
 const getEventById = getAPIResponse(req => Event.getEvent(req.params.id));
 const createEvent = getAPIResponse(req => Event.create(req.body));
 const updateEvent = getAPIResponse(req => Event.update(req.params.id, req.body));
@@ -19,8 +20,10 @@ const createTokenProducer = getAPIResponse(req => Event.createTokenProducer(req.
 const createTokenFan = getAPIResponse(req => Event.createTokenFan(req.body.adminId, req.body.fanUrl));
 const createTokenHostCeleb = userType =>
   getAPIResponse(req => Event.createTokenHostCeleb(req.body.adminId, userType === 'host' ? req.body.hostUrl : req.body.celebrityUrl, userType));
+const createTokenByUserType = getAPIResponse(req => Event.createTokenByUserType(req.params.adminId, req.params.userType));
 
 router.get('/', getEvents);
+router.get('/get-current-admin-event', getMostRecentEvent);
 router.get('/:id', getEventById);
 router.post('/', validate(paramValidation.event), validateEvent, createEvent);
 router.patch('/:id', validate(paramValidation.event), validateEvent, updateEvent);
@@ -31,5 +34,7 @@ router.post('/create-token-producer/:id', createTokenProducer);
 router.post('/create-token-fan', validate(paramValidation.createTokenFan), createTokenFan);
 router.post('/create-token-host', validate(paramValidation.createTokenHost), createTokenHostCeleb('host'));
 router.post('/create-token-celebrity', validate(paramValidation.createTokenCelebrity), createTokenHostCeleb('celebrity'));
+router.post('/create-token/:adminId/:userType', createTokenByUserType);
+
 router.delete('/:id', deleteEvent);
 export default router;

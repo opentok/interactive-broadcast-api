@@ -15,12 +15,28 @@ const setDefaults = (eventData) => {
 const buildEvent = (props, eventData) => setDefaults(R.pick(props, eventData));
 
 /**
- * Get the list of admins
- * @returns {Promise} <resolve: Admin List, reject: Error>
+ * Get the list of events by admin
+ * @returns {Promise} <resolve: Event List, reject: Error>
  */
 const getEvents = async (adminId = null) => {
   const snapshot = await db.ref('events').orderByChild('adminId').equalTo(adminId).once('value');
   return snapshot.val();
+};
+
+/**
+ * Get the last event that is `live` or `preshow`
+ * @param {String} adminId
+ * @returns {Promise} <resolve: Event List, reject: Error>
+ */
+const getMostRecentEvent = async (adminId = null) => {
+  const sortByCreatedAt = R.sortWith([R.ascend(R.prop('createdAt'))]);
+  const filter = status => R.find(R.propEq('status', status));
+  const snapshot = await getEvents(adminId);
+  if (snapshot) {
+    const events = sortByCreatedAt(Object.values(snapshot));
+    return filter(eventStatuses.LIVE)(events) || filter(eventStatuses.PRESHOW)(events);
+  }
+  return null;
 };
 
 /**
@@ -51,9 +67,13 @@ const getEventBySessionId = async (sessionId) => {
  */
 const getEventByKey = async (adminId, slug, field = 'fanUrl') => {
   const snapshot = await db.ref('events').orderByChild(field).equalTo(slug).once('value');
-  const events = Object.values(snapshot.val());
-  // Filtering by adminId
-  return R.find(R.propEq('adminId', adminId))(events);
+  if (snapshot.numChildren()) {
+    const events = Object.values(snapshot.val());
+    // Filtering by adminId
+    return R.find(R.propEq('adminId', adminId))(events);
+  }
+
+  return null;
 };
 
 /**
@@ -251,6 +271,20 @@ const createTokenHostCeleb = async (adminId, slug, userType) => {
 
 const buildEventKey = (fanUrl, adminId) => [fanUrl, adminId].join('-');
 
+/**
+ * Get credentils for the last event that is `live` or `preshow`
+ * @param {String} adminId
+ * @param {String} userType <host/celebrity>
+ * @returns {Promise} <resolve: Event List, reject: Error>
+ */
+const createTokenByUserType = async (adminId, userType) => {
+  const event = await getMostRecentEvent(adminId);
+  if (event) {
+    return await createTokenHostCeleb(adminId, userType === 'celebrity' ? event.celebrityUrl : event.hostUrl, userType);
+  }
+  return null;
+};
+
 export {
   getEvents,
   create,
@@ -267,5 +301,7 @@ export {
   createTokenHostCeleb,
   getEventBySessionId,
   buildEventKey,
-  createTokensFan
+  createTokensFan,
+  getMostRecentEvent,
+  createTokenByUserType
 };
