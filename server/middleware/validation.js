@@ -3,6 +3,7 @@ import R from 'ramda';
 import jwt from 'jsonwebtoken';
 import config from '../../config/config';
 import opentok from '../services/opentok';
+import { roles } from '../services/auth';
 import APIError from '../helpers/APIError';
 
 const Admin = require('../services/admin');
@@ -45,9 +46,9 @@ const validateEvent = (req, res, next) => {
   .catch(R.partial(sendError, [res]));
 };
 
-const checkAdmin = (req, res, next) => checkRole('admin', req, res, next);
-const checkFan = (req, res, next) => checkRole('fan', req, res, next);
-const checkCelebHost = (req, res, next) => checkRole('celebhost', req, res, next);
+const checkAdmin = (req, res, next) => checkRole(roles.ADMIN, req, res, next);
+const checkFan = (req, res, next) => checkRole(roles.FAN, req, res, next);
+const checkCelebHost = (req, res, next) => checkRole(roles.CELEBHOST, req, res, next);
 
 module.exports = {
   validateApiKey,

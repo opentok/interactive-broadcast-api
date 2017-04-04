@@ -3,6 +3,7 @@ const R = require('ramda');
 const { eventProps, timestampCreate, timestampUpdate, eventStatuses, TS } = require('./dbProperties');
 const Admin = require('./admin');
 const OpenTok = require('./opentok');
+const { roles } = require('./auth');
 
 const setDefaults = (eventData) => {
   const setDefaultProps = {
@@ -13,6 +14,8 @@ const setDefaults = (eventData) => {
   return R.evolve(setDefaultProps, eventData);
 };
 const buildEvent = (props, eventData) => setDefaults(R.pick(props, eventData));
+
+const buildOtData = userType => JSON.stringify({ userType });
 
 /**
  * Get the list of events by admin
@@ -210,7 +213,7 @@ const deleteEventsByAdminId = async (id) => {
 const createTokenProducer = async (id) => {
   const event = await getEvent(id);
   const admin = await Admin.getAdmin(event.adminId);
-  const options = { role: OpenTok.otRoles.MODERATOR, data: 'userType=producer' };
+  const options = { role: OpenTok.otRoles.MODERATOR, data: buildOtData(roles.PRODUCER) };
   const backstageToken = await OpenTok.createToken(admin.otApiKey, admin.otSecret, event.sessionId, options);
   const stageToken = await OpenTok.createToken(admin.otApiKey, admin.otSecret, event.stageSessionId, options);
   return {
@@ -222,7 +225,7 @@ const createTokenProducer = async (id) => {
 };
 
 const createTokensFan = async (otApiKey, otSecret, stageSessionId, sessionId) => {
-  const options = { role: OpenTok.otRoles.PUBLISHER, data: 'userType=fan' };
+  const options = { role: OpenTok.otRoles.PUBLISHER, data: buildOtData(roles.FAN) };
   const backstageToken = await OpenTok.createToken(otApiKey, otSecret, sessionId, options);
   const stageToken = await OpenTok.createToken(otApiKey, otSecret, stageSessionId, options);
   return { backstageToken, stageToken };
@@ -259,7 +262,7 @@ const createTokenHostCeleb = async (adminId, slug, userType) => {
   const field = userType === 'host' ? 'hostUrl' : 'celebrityUrl';
   const event = await getEventByKey(adminId, slug, field);
   const admin = await Admin.getAdmin(event.adminId);
-  const options = { role: OpenTok.otRoles.PUBLISHER, data: `userType=${userType}` };
+  const options = { role: OpenTok.otRoles.PUBLISHER, data: buildOtData(userType) };
   const stageToken = await OpenTok.createToken(admin.otApiKey, admin.otSecret, event.stageSessionId, options);
   return {
     apiKey: admin.otApiKey,

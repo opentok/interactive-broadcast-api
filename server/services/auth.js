@@ -7,6 +7,9 @@ import { verifyIdToken } from './firebase';
 
 const roles = {
   ADMIN: 'admin',
+  PRODUCER: 'producer',
+  HOST: 'host',
+  CELEBRITY: 'celebrity',
   FAN: 'fan',
   CELEBHOST: 'celebhost',
 };
