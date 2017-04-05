@@ -69,10 +69,13 @@ const updateUser = async (uid, data) => {
  * @returns {Promise} <resolve: Admin data, reject: Error>
  */
 const updateAdmin = async (uid, data) => {
-  const adminData = buildAdmin(R.merge(timestampUpdate, data));
-  db.ref(`admins/${uid}`).update(adminData);
-  updateUser(R.pick(['email', 'displayName'], data));
-  return getAdmin(uid);
+  if (await getAdmin(uid)) {
+    const adminData = buildAdmin(R.merge(timestampUpdate, data));
+    db.ref(`admins/${uid}`).update(adminData);
+    updateUser(uid, R.pick(['email', 'displayName'], data));
+    return await getAdmin(uid);
+  }
+  return null;
 };
 
 /**

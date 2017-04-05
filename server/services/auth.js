@@ -23,7 +23,7 @@ const roles = {
  */
 const login = async (req, res, next) => {
   const idToken = req.body.idToken;
-  const uid = await verifyIdToken(idToken);
+  const uid = config.env !== 'development' ? await verifyIdToken(idToken) : true;
   if (uid) {
     const token = jwt.sign({
       uid,
