@@ -43,6 +43,21 @@ const eventProps = [
   'createdAt',
   'updatedAt'
 ];
+
+const eventPublicProps = [
+  'id',
+  'adminId',
+  'name',
+  'startImage',
+  'endImage',
+  'fanUrl',
+  'celebrityUrl',
+  'hostUrl',
+  'status',
+  'dateTimeStart',
+  'dateTimeEnd'
+];
+
 const TS = admin.database.ServerValue.TIMESTAMP;
 const timestampCreate = { createdAt: TS, updatedAt: TS };
 const timestampUpdate = { updatedAt: TS };
@@ -58,6 +73,7 @@ export {
   adminProps,
   userProps,
   eventProps,
+  eventPublicProps,
   timestampCreate,
   timestampUpdate,
   eventStatuses,

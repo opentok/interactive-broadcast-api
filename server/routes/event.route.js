@@ -8,6 +8,7 @@ const paramValidation = require('../../config/param-validation');
 const { validateEvent, checkAdmin, checkFan, checkCelebHost } = require('../middleware/validation');
 
 const getEvents = getAPIResponse(req => Event.getEvents(req.query.adminId), { skipNotFoundValidation: true });
+const getEventsByAdmin = getAPIResponse(req => Event.getEventsByAdmin(req.query.adminId), { skipNotFoundValidation: true });
 const getMostRecentEvent = getAPIResponse(req => Event.getMostRecentEvent(req.query.adminId));
 const getEventById = getAPIResponse(req => Event.getEvent(req.params.id));
 const createEvent = getAPIResponse(req => Event.create(req.body));
@@ -23,6 +24,7 @@ const createTokenHostCeleb = userType =>
 const createTokenByUserType = getAPIResponse(req => Event.createTokenByUserType(req.params.adminId, req.params.userType));
 
 router.get('/', getEvents);
+router.get('/get-events-by-admin', getEventsByAdmin);
 router.get('/get-current-admin-event', getMostRecentEvent);
 router.get('/:id', getEventById);
 router.post('/', checkAdmin, validate(paramValidation.event), validateEvent, createEvent);

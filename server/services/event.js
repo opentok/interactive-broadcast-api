@@ -1,10 +1,11 @@
 const { db } = require('./firebase');
 const R = require('ramda');
-const { eventProps, timestampCreate, timestampUpdate, eventStatuses, TS } = require('./dbProperties');
+const { eventProps, timestampCreate, timestampUpdate, eventStatuses, TS, eventPublicProps } = require('./dbProperties');
 const Admin = require('./admin');
 const OpenTok = require('./opentok');
 const { roles } = require('./auth');
 
+/** Private */
 const setDefaults = (eventData) => {
   const setDefaultProps = {
     status: R.defaultTo(eventStatuses.NOT_STARTED),
@@ -14,8 +15,11 @@ const setDefaults = (eventData) => {
   return R.evolve(setDefaultProps, eventData);
 };
 const buildEvent = (props, eventData) => setDefaults(R.pick(props, eventData));
-
 const buildOtData = userType => JSON.stringify({ userType });
+const sortByCreatedAt = R.sortWith([R.ascend(R.prop('createdAt'))]);
+const filterByStatus = status => R.find(R.propEq('status', status));
+
+/** Exports */
 
 /**
  * Get the list of events by admin
@@ -27,17 +31,29 @@ const getEvents = async (adminId = null) => {
 };
 
 /**
+ * Get the list of events by admin for mobile apps without token
+ * @returns {Promise} <resolve: Event List, reject: Error>
+ */
+const getEventsByAdmin = async (adminId = null) => {
+  const events = await getEvents(adminId);
+  if (events) {
+    const notClosed = event => event.status !== eventStatuses.CLOSED;
+    const pickProps = items => items.map(item => R.pick(eventPublicProps, item));
+    return R.filter(notClosed, sortByCreatedAt(pickProps(Object.values(events))));
+  }
+  return null;
+};
+
+/**
  * Get the last event that is `live` or `preshow`
  * @param {String} adminId
  * @returns {Promise} <resolve: Event List, reject: Error>
  */
 const getMostRecentEvent = async (adminId = null) => {
-  const sortByCreatedAt = R.sortWith([R.ascend(R.prop('createdAt'))]);
-  const filter = status => R.find(R.propEq('status', status));
   const snapshot = await getEvents(adminId);
   if (snapshot) {
     const events = sortByCreatedAt(Object.values(snapshot));
-    return filter(eventStatuses.LIVE)(events) || filter(eventStatuses.PRESHOW)(events);
+    return filterByStatus(eventStatuses.LIVE)(events) || filterByStatus(eventStatuses.PRESHOW)(events);
   }
   return null;
 };
@@ -306,5 +322,6 @@ export {
   buildEventKey,
   createTokensFan,
   getMostRecentEvent,
-  createTokenByUserType
+  createTokenByUserType,
+  getEventsByAdmin
 };

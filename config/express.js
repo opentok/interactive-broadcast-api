@@ -24,7 +24,7 @@ if (config.env === 'development') {
 // parse body params and attache them to req.body
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(expressJwt({ secret: config.jwtSecret }).unless({ path: ['/api/auth/token'] }));
+app.use(expressJwt({ secret: config.jwtSecret }).unless({ path: ['/api/auth/token', '/api/event/get-events-by-admin'] }));
 app.use(cookieParser());
 app.use(compress());
 app.use(methodOverride());
