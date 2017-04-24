@@ -123,7 +123,6 @@ const initWebsocketServer = (httpServer) => {
       const { ableToJoin, eventData } = await presence.ableToJoinInteractive(fanUrl, adminId);
       const data = ableToJoin ? await createTokenFan(adminId, fanUrl) : eventData;
       const response = { ableToJoin, eventData: data };
-
       // get the broadcast data if hls is enabled
       if (eventData.hls) {
         try {

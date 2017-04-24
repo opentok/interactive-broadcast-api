@@ -252,7 +252,7 @@ const createTokensFan = async (otApiKey, otSecret, stageSessionId, sessionId) =>
 const createTokenFan = async (adminId, slug) => {
   const event = await getEventByKey(adminId, slug, 'fanUrl');
   const { otApiKey, otSecret, httpSupport } = await Admin.getAdmin(event.adminId);
-  const { backstageToken, stageToken } = createTokensFan(otApiKey, otSecret, event.stageSessionId, event.sessionId);
+  const { backstageToken, stageToken } = await createTokensFan(otApiKey, otSecret, event.stageSessionId, event.sessionId);
   return R.merge(event, { apiKey: otApiKey, backstageToken, stageToken, httpSupport });
 };
 
