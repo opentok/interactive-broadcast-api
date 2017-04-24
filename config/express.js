@@ -21,10 +21,19 @@ if (config.env === 'development') {
   app.use(logger('dev'));
 }
 
+/* Define the routes that work without a JWT token */
+const allowedPaths = [
+  '/api/auth/token',
+  '/api/auth/token-fan',
+  '/api/auth/token-celebrity',
+  '/api/auth/token-host',
+  '/api/event/get-events-by-admin',
+];
+
 // parse body params and attache them to req.body
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(expressJwt({ secret: config.jwtSecret }).unless({ path: ['/api/auth/token', '/api/event/get-events-by-admin'] }));
+app.use(expressJwt({ secret: config.jwtSecret }).unless({ path: allowedPaths }));
 app.use(cookieParser());
 app.use(compress());
 app.use(methodOverride());

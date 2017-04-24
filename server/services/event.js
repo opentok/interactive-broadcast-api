@@ -232,12 +232,7 @@ const createTokenProducer = async (id) => {
   const options = { role: OpenTok.otRoles.MODERATOR, data: buildOtData(roles.PRODUCER) };
   const backstageToken = await OpenTok.createToken(admin.otApiKey, admin.otSecret, event.sessionId, options);
   const stageToken = await OpenTok.createToken(admin.otApiKey, admin.otSecret, event.stageSessionId, options);
-  return {
-    apiKey: admin.otApiKey,
-    event,
-    backstageToken,
-    stageToken,
-  };
+  return R.merge(event, { apiKey: admin.otApiKey, backstageToken, stageToken });
 };
 
 const createTokensFan = async (otApiKey, otSecret, stageSessionId, sessionId) => {
@@ -258,13 +253,7 @@ const createTokenFan = async (adminId, slug) => {
   const event = await getEventByKey(adminId, slug, 'fanUrl');
   const { otApiKey, otSecret, httpSupport } = await Admin.getAdmin(event.adminId);
   const { backstageToken, stageToken } = createTokensFan(otApiKey, otSecret, event.stageSessionId, event.sessionId);
-  return {
-    apiKey: otApiKey,
-    event,
-    backstageToken,
-    stageToken,
-    httpSupport
-  };
+  return R.merge(event, { apiKey: otApiKey, backstageToken, stageToken, httpSupport });
 };
 
 /**
@@ -280,12 +269,7 @@ const createTokenHostCeleb = async (adminId, slug, userType) => {
   const admin = await Admin.getAdmin(event.adminId);
   const options = { role: OpenTok.otRoles.PUBLISHER, data: buildOtData(userType) };
   const stageToken = await OpenTok.createToken(admin.otApiKey, admin.otSecret, event.stageSessionId, options);
-  return {
-    apiKey: admin.otApiKey,
-    event,
-    stageToken,
-    httpSupport: admin.httpSupport
-  };
+  return R.merge(event, { apiKey: admin.otApiKey, stageToken, httpSupport: admin.httpSupport });
 };
 
 const buildEventKey = (fanUrl, adminId) => [fanUrl, adminId].join('-');
@@ -320,7 +304,6 @@ export {
   createTokenHostCeleb,
   getEventBySessionId,
   buildEventKey,
-  createTokensFan,
   getMostRecentEvent,
   createTokenByUserType,
   getEventsByAdmin

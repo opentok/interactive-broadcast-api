@@ -3,9 +3,9 @@ import R from 'ramda';
 import socketioJwt from 'socketio-jwt';
 import debounce from 'lodash.debounce';
 import config from '../../config/config';
-import { buildEventKey, createTokensFan } from './event';
+import { buildEventKey, createTokenFan } from './event';
 
-const { eventStatuses, eventProps } = require('./dbProperties');
+const { eventStatuses } = require('./dbProperties');
 const presence = require('./presence');
 const broadcast = require('./broadcast');
 
@@ -121,9 +121,8 @@ const initWebsocketServer = (httpServer) => {
       };
 
       const { ableToJoin, eventData } = await presence.ableToJoinInteractive(fanUrl, adminId);
-      const credentials = ableToJoin ?
-        await createTokensFan(eventData.otApiKey, eventData.otSecret, eventData.stageSessionId, eventData.sessionId) : {};
-      const response = { ableToJoin, eventData: R.merge(credentials, R.pick(eventProps, eventData)) };
+      const data = ableToJoin ? await createTokenFan(adminId, fanUrl) : eventData;
+      const response = { ableToJoin, eventData: data };
 
       // get the broadcast data if hls is enabled
       if (eventData.hls) {
@@ -138,7 +137,6 @@ const initWebsocketServer = (httpServer) => {
           return;
         }
       }
-
       emitAbleToJoin(response);
 
       if (ableToJoin) {
