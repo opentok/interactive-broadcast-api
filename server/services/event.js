@@ -237,7 +237,7 @@ const createTokenProducer = async (id) => {
 
 const createTokensFan = async (otApiKey, otSecret, stageSessionId, sessionId) => {
   const options = { role: OpenTok.otRoles.PUBLISHER, data: buildOtData(roles.FAN) };
-  const backstageToken = await OpenTok.createToken(otApiKey, otSecret, sessionId, options);
+  const backstageToken = await OpenTok.createToken(otApiKey, otSecret, sessionId, R.assoc('data', buildOtData(roles.BACKSTAGE_FAN), options));
   const stageToken = await OpenTok.createToken(otApiKey, otSecret, stageSessionId, options);
   return { backstageToken, stageToken };
 };

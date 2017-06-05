@@ -11,6 +11,7 @@ const roles = {
   HOST: 'host',
   CELEBRITY: 'celebrity',
   FAN: 'fan',
+  BACKSTAGE_FAN: 'backstageFan',
   CELEBHOST: 'celebhost',
 };
 
