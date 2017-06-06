@@ -16,7 +16,6 @@ const envVarsSchema = Joi.object({
     .description('JWT Secret required to sign'),
   INTERACTIVE_STREAM_LIMIT: Joi.number().integer().min(0).default('10')
       .description('INTERACTIVE_STREAM_LIMIT is required'),
-  REDISCLOUD_URL: Joi.string().required(),
 }).unknown()
   .required();
 
@@ -32,7 +31,6 @@ const config = {
   fireBaseAuthDomain: 'opentok-ib.firebaseapp.com',
   firebaseDatabaseURL: 'https://opentok-ib.firebaseio.com',
   interactiveStreamLimit: envVars.INTERACTIVE_STREAM_LIMIT || Infinity,
-  redisUrl: envVars.REDISCLOUD_URL,
 };
 
 export default config;

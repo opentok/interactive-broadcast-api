@@ -1,3 +1,5 @@
+import config from '../../config/config';
+
 const { db } = require('./firebase');
 const R = require('ramda');
 const { eventProps, timestampCreate, timestampUpdate, eventStatuses, TS, eventPublicProps } = require('./dbProperties');
@@ -151,6 +153,65 @@ const update = async (id, data) => {
 };
 
 /**
+ * Create a new record in the activeBroadcasts node
+ * @param {String} id
+ * @returns {Promise} <resolve: Event data, reject: Error>
+ */
+const addActiveBroadcast = async (id) => {
+  const event = await getEvent(id);
+  const record = {
+    interactiveLimit: config.interactiveStreamLimit,
+    name: event.name,
+    hls: null,
+    status: eventStatuses.PRESHOW,
+    startImage: event.startImage || null,
+    endImage: event.endImage || null,
+    activeFans: null
+  };
+  const ref = db.ref(`activeBroadcasts/${event.adminId}/${event.fanUrl}`);
+  try {
+    // Automatically remove the active fan record on disconnect event
+    ref.set(record);
+    ref.on('value', (value) => {
+      console.log('new value', value);
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+/**
+ * Update the status of an activeBroadcast
+ * @param {String} id
+ * @returns {Promise} <resolve: Event data, reject: Error>
+ */
+const updateActiveBroadcast = async (id, newStatus) => {
+  const event = await getEvent(id);
+  const record = {
+    status: newStatus,
+  };
+  try {
+    await db.ref(`activeBroadcasts/${event.adminId}/${event.fanUrl}`).update(record);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+/**
+ * Delete an activeBroadcast
+ * @param {String} id
+ * @returns {Promise} <resolve: Event data, reject: Error>
+ */
+const deleteActiveBroadcast = async (id) => {
+  const event = await getEvent(id);
+  try {
+    await db.ref(`activeBroadcasts/${event.adminId}/${event.fanUrl}`).remove();
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+/**
  * Change status
  * @param {String} id
  * @param {Object} eventData
@@ -159,10 +220,17 @@ const update = async (id, data) => {
 const changeStatus = async (id, data) => {
   const updateData = data;
 
-  if (data.status === eventStatuses.LIVE) {
+  if (data.status === eventStatuses.PRESHOW) {
+    /* Create a new record in activeBroadcasts node */
+    await addActiveBroadcast(id);
+  } else if (data.status === eventStatuses.LIVE) {
     updateData.showStartedAt = TS;
+    /* Update the status of the activeBroadcast */
+    await updateActiveBroadcast(id, data.status);
   } else if (data.status === eventStatuses.CLOSED) {
     updateData.showEndedAt = TS;
+    /* Delete the activeBroadcast */
+    await deleteActiveBroadcast(id);
   }
   update(id, updateData);
   return getEvent(id);

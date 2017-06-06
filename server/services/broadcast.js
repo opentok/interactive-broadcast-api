@@ -1,5 +1,7 @@
 /* eslint-env es6 */
 
+// @TODO rewrite this module
+
 /** Imports */
 import redis from 'redis';
 import jwt from 'jsonwebtoken';
