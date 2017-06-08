@@ -35,7 +35,7 @@ const eventProps = [
   'archiveUrl',
   'archiveId',
   'redirectUrl',
-  'composed',
+  'uncomposed',
   'showStartedAt',
   'showEndedAt',
   'adminId',

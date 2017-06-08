@@ -12,7 +12,7 @@ const setDefaults = (eventData) => {
   const setDefaultProps = {
     status: R.defaultTo(eventStatuses.NOT_STARTED),
     archiveEvent: R.defaultTo(false),
-    composed: R.defaultTo(false),
+    uncomposed: R.defaultTo(false),
   };
   return R.evolve(setDefaultProps, eventData);
 };
@@ -153,6 +153,48 @@ const update = async (id, data) => {
 };
 
 /**
+* Start archive
+* @param {String} id
+* @returns archiveId
+*/
+const startArchive = async (id) => {
+  const event = await getEvent(id);
+  if (event.archiveEvent) {
+    const admin = await Admin.getAdmin(event.adminId);
+    try {
+      const archiveId = await OpenTok.startArchive(admin.otApiKey, admin.otSecret, event.stageSessionId, event.name, event.uncomposed);
+      console.log('Starting the archive => ', archiveId);
+      return archiveId;
+    } catch (error) {
+      console.log('Error starting the archive =>', error);
+    }
+  }
+  return false;
+};
+
+/**
+* Stop archive
+* @param {String} id
+* @returns true
+*/
+const stopArchive = async (id) => {
+  const event = await getEvent(id);
+  if (event.archiveId) {
+    try {
+      const admin = await Admin.getAdmin(event.adminId);
+      await OpenTok.stopArchive(admin.otApiKey, admin.otSecret, event.archiveId);
+      const archiveExtension = event.uncomposed ? 'zip' : 'mp4';
+      const url = `${config.bucketUrl}/${admin.otApiKey}/${event.archiveId}/archive.${archiveExtension}`;
+      console.log('Stopping the archive =>', url);
+      return url;
+    } catch (error) {
+      console.log('Error stopping the archive =>', error);
+    }
+  }
+  return true;
+};
+
+/**
  * Create a new record in the activeBroadcasts node
  * @param {String} id
  * @returns {Promise} <resolve: Event data, reject: Error>
@@ -166,14 +208,15 @@ const addActiveBroadcast = async (id) => {
     status: eventStatuses.PRESHOW,
     startImage: event.startImage || null,
     endImage: event.endImage || null,
-    activeFans: null
+    activeFans: null,
+    archiving: false,
   };
   const ref = db.ref(`activeBroadcasts/${event.adminId}/${event.fanUrl}`);
   try {
     // Automatically remove the active fan record on disconnect event
     ref.set(record);
     ref.on('value', (value) => {
-      console.log('new value', value);
+      console.log('new value', value.val());
     });
   } catch (error) {
     console.log(error);
@@ -183,12 +226,15 @@ const addActiveBroadcast = async (id) => {
 /**
  * Update the status of an activeBroadcast
  * @param {String} id
+ * @param {String} newStatus
+ * @param {String} archiveId
  * @returns {Promise} <resolve: Event data, reject: Error>
  */
-const updateActiveBroadcast = async (id, newStatus) => {
+const updateActiveBroadcast = async (id, newStatus, archiveId) => {
   const event = await getEvent(id);
   const record = {
     status: newStatus,
+    archiving: archiveId !== false,
   };
   try {
     await db.ref(`activeBroadcasts/${event.adminId}/${event.fanUrl}`).update(record);
@@ -218,47 +264,31 @@ const deleteActiveBroadcast = async (id) => {
  * @returns {Promise} <resolve: Event data, reject: Error>
  */
 const changeStatus = async (id, data) => {
-  const updateData = data;
+  let updateData = data;
 
   if (data.status === eventStatuses.PRESHOW) {
     /* Create a new record in activeBroadcasts node */
     await addActiveBroadcast(id);
   } else if (data.status === eventStatuses.LIVE) {
     updateData.showStartedAt = TS;
+
+    /* Start archiving */
+    const archiveId = await startArchive(id);
+    updateData.archiveId = archiveId;
+
     /* Update the status of the activeBroadcast */
-    await updateActiveBroadcast(id, data.status);
+    await updateActiveBroadcast(id, data.status, archiveId);
   } else if (data.status === eventStatuses.CLOSED) {
     updateData.showEndedAt = TS;
     /* Delete the activeBroadcast */
     await deleteActiveBroadcast(id);
+
+    /* Stop archiving */
+    const archiveUrl = await stopArchive(id);
+    updateData.archiveUrl = archiveUrl;
   }
   update(id, updateData);
   return getEvent(id);
-};
-
-/**
-* Start archive
-* @param {String} id
-* @returns archiveId
-*/
-const startArchive = async (id) => {
-  const event = await getEvent(id);
-  const admin = await Admin.getAdmin(event.adminId);
-  const archiveId = await OpenTok.startArchive(admin.otApiKey, admin.otSecret, event.stageSessionId, event.name, event.composed);
-  update(id, { archiveId });
-  return archiveId;
-};
-
-/**
-* Stop archive
-* @param {String} id
-* @returns true
-*/
-const stopArchive = async (id) => {
-  const event = await getEvent(id);
-  const admin = await Admin.getAdmin(event.adminId);
-  OpenTok.stopArchive(admin.otApiKey, admin.otSecret, event.archiveId);
-  return true;
 };
 
 /**
@@ -365,8 +395,6 @@ export {
   deleteEventsByAdminId,
   getEventByKey,
   changeStatus,
-  startArchive,
-  stopArchive,
   createTokenProducer,
   createTokenFan,
   createTokenHostCeleb,

@@ -15,7 +15,9 @@ const envVarsSchema = Joi.object({
   JWT_SECRET: Joi.string().required()
     .description('JWT Secret required to sign'),
   INTERACTIVE_STREAM_LIMIT: Joi.number().integer().min(0).default('10')
-      .description('INTERACTIVE_STREAM_LIMIT is required'),
+    .description('INTERACTIVE_STREAM_LIMIT is required'),
+  BUCKET_URL: Joi.string().required()
+    .description('BUCKET_URL required'),
 }).unknown()
   .required();
 
@@ -31,6 +33,7 @@ const config = {
   fireBaseAuthDomain: 'opentok-ib.firebaseapp.com',
   firebaseDatabaseURL: 'https://opentok-ib.firebaseio.com',
   interactiveStreamLimit: envVars.INTERACTIVE_STREAM_LIMIT || Infinity,
+  bucketUrl: envVars.BUCKET_URL,
 };
 
 export default config;

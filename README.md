@@ -169,7 +169,7 @@ const eventProps = [
   'archiveUrl',
   'archiveId',
   'redirectUrl',
-  'composed',
+  'uncomposed',
   'showStartedAt',
   'showEndedAt',
   'adminId',
@@ -298,7 +298,7 @@ This service updates event data and connections to the local storage
 setEventData                    => Returns the data of an event.
 ableToJoinInteractiveByEventKey => Indicates if an user can join to the event for a given `EventKey` by returning a boolean `ableToJoin` and the `eventData`.
 getActiveCount                  => Indicates how many fans are connected to the session by returning the active connections.
-ableToJoinInteractive           => Uses `getInteractiveEventData` to obtain the `EventKey` of an event associated with a fanUrl and adminId, then uses `ableToJoinInteractiveByEventKey` and returns `ableToJoin` and the `eventData` 
+ableToJoinInteractive           => Uses `getInteractiveEventData` to obtain the `EventKey` of an event associated with a fanUrl and adminId, then uses `ableToJoinInteractiveByEventKey` and returns `ableToJoin` and the `eventData`
 updateConnections               => Update active connections to interactive session
 removeLocalStorage              => Clean up local storage
 getActiveConnections            => Returns how many fans are connected to the session

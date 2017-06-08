@@ -60,7 +60,7 @@ const event = {
     hostUrl: Joi.string().required(),
     archiveEvent: Joi.boolean().required(),
     redirectUrl: Joi.string(),
-    composed: Joi.boolean().required(),
+    uncomposed: Joi.boolean().required(),
     adminId: Joi.string(),
     status: Joi.string().valid(R.values(eventStatuses)),
   },

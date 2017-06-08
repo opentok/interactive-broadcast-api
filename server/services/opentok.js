@@ -65,14 +65,14 @@ const createSession = (apiKey, apiSecret) =>
  * @param {String} apiSecret
  * @param {String} sessionId
  * @param {String} eventName
- * @param {Boolean} composed
+ * @param {Boolean} uncomposed
  * @returns {Promise} <Resolve => {String}, Reject => {Error}>
  */
-const startArchive = (apiKey, apiSecret, sessionId, eventName, composed) =>
+const startArchive = (apiKey, apiSecret, sessionId, eventName, uncomposed) =>
   new Promise((resolve, reject) => {
     const ot = otInstance(apiKey, apiSecret);
     const name = ['Archive', eventName, new Date().toISOString().slice(0, 10)].join(' ');
-    const outputMode = composed ? 'composed' : 'individual';
+    const outputMode = uncomposed ? 'individual' : 'composed';
     const archiveOptions = { name, outputMode };
     ot.startArchive(sessionId, archiveOptions, (err, archive) => (err ? reject(err) : resolve(archive.id)));
   });

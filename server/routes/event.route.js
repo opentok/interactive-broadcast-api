@@ -15,8 +15,6 @@ const createEvent = getAPIResponse(req => Event.create(req.body));
 const updateEvent = getAPIResponse(req => Event.update(req.params.id, req.body));
 const deleteEvent = getAPIResponse(req => Event.deleteEvent(req.params.id));
 const changeStatus = getAPIResponse(req => Event.changeStatus(req.params.id, req.body));
-const startArchive = getAPIResponse(req => Event.startArchive(req.params.id));
-const stopArchive = getAPIResponse(req => Event.stopArchive(req.params.id));
 const createTokenProducer = getAPIResponse(req => Event.createTokenProducer(req.params.id));
 const createTokenFan = getAPIResponse(req => Event.createTokenFan(req.body.adminId, req.body.fanUrl));
 const createTokenHostCeleb = userType =>
@@ -30,8 +28,6 @@ router.get('/:id', getEventById);
 router.post('/', checkAdmin, validate(paramValidation.event), validateEvent, createEvent);
 router.patch('/:id', checkAdmin, validate(paramValidation.event), validateEvent, updateEvent);
 router.put('/change-status/:id', checkAdmin, validate(paramValidation.eventStatus), changeStatus);
-router.post('/start-archive/:id', checkAdmin, startArchive);
-router.post('/stop-archive/:id', checkAdmin, stopArchive);
 router.post('/create-token-producer/:id', checkAdmin, createTokenProducer);
 router.post('/create-token-fan', checkFan, validate(paramValidation.createTokenFan), createTokenFan);
 router.post('/create-token-host', checkCelebHost, validate(paramValidation.createTokenHost), createTokenHostCeleb('host'));
