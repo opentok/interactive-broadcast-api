@@ -6,6 +6,7 @@ const { eventProps, timestampCreate, timestampUpdate, eventStatuses, TS, eventPu
 const Admin = require('./admin');
 const OpenTok = require('./opentok');
 const { roles } = require('./auth');
+const broadcast = require('./broadcast');
 
 /** Private */
 const setDefaults = (eventData) => {
@@ -177,11 +178,9 @@ const startArchive = async (id) => {
 * @param {String} id
 * @returns true
 */
-const stopArchive = async (id) => {
-  const event = await getEvent(id);
+const stopArchive = async (event, admin) => {
   if (event.archiveId) {
     try {
-      const admin = await Admin.getAdmin(event.adminId);
       await OpenTok.stopArchive(admin.otApiKey, admin.otSecret, event.archiveId);
       const archiveExtension = event.uncomposed ? 'zip' : 'mp4';
       const url = `${config.bucketUrl}/${admin.otApiKey}/${event.archiveId}/archive.${archiveExtension}`;
@@ -201,25 +200,37 @@ const stopArchive = async (id) => {
  */
 const addActiveBroadcast = async (id) => {
   const event = await getEvent(id);
+  const admin = await Admin.getAdmin(event.adminId);
   const record = {
     interactiveLimit: config.interactiveStreamLimit,
     name: event.name,
-    hls: null,
+    hlsUrl: null,
     status: eventStatuses.PRESHOW,
     startImage: event.startImage || null,
     endImage: event.endImage || null,
     activeFans: null,
     archiving: false,
+    hlsEnabled: admin.hls,
   };
   const ref = db.ref(`activeBroadcasts/${event.adminId}/${event.fanUrl}`);
   try {
-    // Automatically remove the active fan record on disconnect event
     ref.set(record);
-    ref.on('value', (value) => {
-      console.log('new value', value.val());
+    ref.on('value', async (value) => {
+      const activeBroadcast = value.val();
+      if (activeBroadcast) {
+        const { activeFans, hlsUrl, hlsEnabled, interactiveLimit, status } = activeBroadcast; // eslint-disable-line  no-unused-vars
+        const viewers = R.length(R.keys(activeFans));  // eslint-disable-line  no-unused-vars
+        /* Uncomment the next line if you need to consider the limit */
+        // const shouldStartBroadcast = hlsEnabled && !hlsUrl && status === 'live' && viewers >= interactiveLimit;
+        const shouldStartBroadcast = (hlsEnabled || event.rtmpUrl) && !hlsUrl && status === 'live';
+        if (shouldStartBroadcast) {
+          const broadcastData = await broadcast.start(admin.otApiKey, admin.otSecret, event.stageSessionId, event.rtmpUrl, hlsEnabled);
+          await ref.update(broadcastData);
+        }
+      }
     });
   } catch (error) {
-    console.log(error);
+    console.log('Error connecting to firebase => ', error);
   }
 };
 
@@ -244,14 +255,28 @@ const updateActiveBroadcast = async (id, newStatus, archiveId) => {
 };
 
 /**
+ * Stop HLS if it's running
+ * @param {String} id
+ * @returns {Promise} <resolve: Event data, reject: Error>
+ */
+const stopHLS = async (otApiKey, otSecret, fanUrl, adminId) => {
+  try {
+    const query = await db.ref(`activeBroadcasts/${adminId}/${fanUrl}`).once('value');
+    const activeBroadcast = query.val();
+    if (activeBroadcast.hlsUrl) broadcast.stop(otApiKey, otSecret, activeBroadcast.hlsId);
+  } catch (error) {
+    console.log('Error stopping HLS', error);
+  }
+};
+
+/**
  * Delete an activeBroadcast
  * @param {String} id
  * @returns {Promise} <resolve: Event data, reject: Error>
  */
-const deleteActiveBroadcast = async (id) => {
-  const event = await getEvent(id);
+const deleteActiveBroadcast = async (fanUrl, adminId) => {
   try {
-    await db.ref(`activeBroadcasts/${event.adminId}/${event.fanUrl}`).remove();
+    await db.ref(`activeBroadcasts/${adminId}/${fanUrl}`).remove();
   } catch (error) {
     console.log(error);
   }
@@ -264,7 +289,7 @@ const deleteActiveBroadcast = async (id) => {
  * @returns {Promise} <resolve: Event data, reject: Error>
  */
 const changeStatus = async (id, data) => {
-  let updateData = data;
+  const updateData = data;
 
   if (data.status === eventStatuses.PRESHOW) {
     /* Create a new record in activeBroadcasts node */
@@ -279,13 +304,22 @@ const changeStatus = async (id, data) => {
     /* Update the status of the activeBroadcast */
     await updateActiveBroadcast(id, data.status, archiveId);
   } else if (data.status === eventStatuses.CLOSED) {
-    updateData.showEndedAt = TS;
-    /* Delete the activeBroadcast */
-    await deleteActiveBroadcast(id);
+    /* Get the event and admin information */
+    const event = await getEvent(id);
+    const admin = await Admin.getAdmin(event.adminId);
+
+    /* Stop HLS */
+    await stopHLS(admin.otApiKey, admin.otSecret, event.fanUrl, event.adminId);
+
+    /* Delete the activeBroadcast record */
+    await deleteActiveBroadcast(event.fanUrl, event.adminId);
 
     /* Stop archiving */
-    const archiveUrl = await stopArchive(id);
+    const archiveUrl = await stopArchive(event, admin);
     updateData.archiveUrl = archiveUrl;
+
+    /* update the showEndedAt */
+    updateData.showEndedAt = TS;
   }
   update(id, updateData);
   return getEvent(id);
