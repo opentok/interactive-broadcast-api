@@ -11,21 +11,21 @@ const jwtAdmin = {
 
 const jwtFan = {
   body: {
-    fanUrl: Joi.string().required(),
+    fanUrl: Joi.string(),
     adminId: Joi.string().required(),
   }
 };
 
 const jwtHost = {
   body: {
-    hostUrl: Joi.string().required(),
+    hostUrl: Joi.string(),
     adminId: Joi.string().required(),
   }
 };
 
 const jwtCelebrity = {
   body: {
-    celebrityUrl: Joi.string().required(),
+    celebrityUrl: Joi.string(),
     adminId: Joi.string().required(),
   }
 };

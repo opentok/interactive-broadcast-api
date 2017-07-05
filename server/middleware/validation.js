@@ -48,7 +48,7 @@ const validateEvent = (req, res, next) => {
 
 const checkAdmin = (req, res, next) => checkRole(roles.ADMIN, req, res, next);
 const checkFan = (req, res, next) => checkRole(roles.FAN, req, res, next);
-const checkCelebHost = (req, res, next) => checkRole(roles.CELEBHOST, req, res, next);
+const checkCelebHost = (req, res, next) => checkRole(req.params.userType === roles.FAN ? roles.FAN : roles.CELEBHOST, req, res, next);
 
 module.exports = {
   validateApiKey,

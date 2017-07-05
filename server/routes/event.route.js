@@ -9,7 +9,7 @@ const { validateEvent, checkAdmin, checkFan, checkCelebHost } = require('../midd
 
 const getEvents = getAPIResponse(req => Event.getEvents(req.query.adminId), { skipNotFoundValidation: true });
 const getEventsByAdmin = getAPIResponse(req => Event.getEventsByAdmin(req.query.adminId), { skipNotFoundValidation: true });
-const getMostRecentEvent = getAPIResponse(req => Event.getMostRecentEvent(req.query.adminId));
+const getMostRecentEvent = getAPIResponse(req => Event.getMostRecentEvent(req.query.adminId), { skipNotFoundValidation: true });
 const getEventById = getAPIResponse(req => Event.getEvent(req.params.id));
 const createEvent = getAPIResponse(req => Event.create(req.body));
 const updateEvent = getAPIResponse(req => Event.update(req.params.id, req.body));

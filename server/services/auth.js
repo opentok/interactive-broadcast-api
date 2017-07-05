@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import httpStatus from 'http-status';
 import APIError from '../helpers/APIError';
 import config from '../../config/config';
-import { getEventByKey } from './event';
+import { getEventByKey, getMostRecentEvent } from './event';
 import { verifyIdToken } from './firebase';
 
 const roles = {
@@ -45,7 +45,7 @@ const login = async (req, res, next) => {
  */
 const loginFan = async (req, res, next) => {
   const { fanUrl, adminId } = req.body;
-  const event = await getEventByKey(adminId, fanUrl, 'fanUrl');
+  const event = fanUrl ? await getEventByKey(adminId, fanUrl, 'fanUrl') : await getMostRecentEvent(adminId);
   if (event) {
     const token = jwt.sign({
       fanUrl,
@@ -68,7 +68,7 @@ const loginFan = async (req, res, next) => {
  */
 const loginHost = async (req, res, next) => {
   const { hostUrl, adminId } = req.body;
-  const event = await getEventByKey(adminId, hostUrl, 'hostUrl');
+  const event = hostUrl ? await getEventByKey(adminId, hostUrl, 'hostUrl') : await getMostRecentEvent(adminId);
   if (event) {
     const token = jwt.sign({
       hostUrl,
@@ -91,7 +91,7 @@ const loginHost = async (req, res, next) => {
  */
 const loginCelebrity = async (req, res, next) => {
   const { celebrityUrl, adminId } = req.body;
-  const event = await getEventByKey(adminId, celebrityUrl, 'celebrityUrl');
+  const event = celebrityUrl ? await getEventByKey(adminId, celebrityUrl, 'celebrityUrl') : await getMostRecentEvent(adminId);
   if (event) {
     const token = jwt.sign({
       celebrityUrl,

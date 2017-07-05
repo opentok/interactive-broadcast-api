@@ -415,7 +415,9 @@ const buildEventKey = (fanUrl, adminId) => [fanUrl, adminId].join('-');
 const createTokenByUserType = async (adminId, userType) => {
   const event = await getMostRecentEvent(adminId);
   if (event) {
-    return await createTokenHostCeleb(adminId, userType === 'celebrity' ? event.celebrityUrl : event.hostUrl, userType);
+    return userType !== roles.FAN ?
+      await createTokenHostCeleb(adminId, userType === roles.CELEBRITY ? event.celebrityUrl : event.hostUrl, userType) :
+      await createTokenFan(adminId, event.fanUrl);
   }
   return null;
 };
