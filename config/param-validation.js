@@ -53,14 +53,14 @@ const updateAdmin = {
 const event = {
   body: {
     name: Joi.string().required(),
-    startImage: {
+    startImage: Joi.object({
       id: Joi.string(),
       url: Joi.string(),
-    },
-    endImage: {
+    }),
+    endImage: Joi.object({
       id: Joi.string(),
       url: Joi.string(),
-    },
+    }),
     fanUrl: Joi.string().required(),
     celebrityUrl: Joi.string().required(),
     hostUrl: Joi.string().required(),
