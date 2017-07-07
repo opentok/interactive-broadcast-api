@@ -3,18 +3,8 @@ import config from '../../config/config';
 const CronJob = require('cron').CronJob;
 const moment = require('moment');
 const R = require('ramda');
-const {
-  db,
-  file
-} = require('./firebase');
-const {
-  eventProps,
-  timestampCreate,
-  timestampUpdate,
-  eventStatuses,
-  TS,
-  eventPublicProps
-} = require('./dbProperties');
+const { db, file } = require('./firebase');
+const { eventProps, timestampCreate, timestampUpdate, eventStatuses, TS, eventPublicProps } = require('./dbProperties');
 const Admin = require('./admin');
 const OpenTok = require('./opentok');
 const {
@@ -249,7 +239,6 @@ const addActiveBroadcast = async (id) => {
           activeFans,
           hlsUrl,
           hlsEnabled,
-          interactiveLimit,
           status
         } = activeBroadcast; // eslint-disable-line  no-unused-vars
         const viewers = R.length(R.keys(activeFans)); // eslint-disable-line  no-unused-vars
@@ -429,15 +418,8 @@ const createTokensFan = async (otApiKey, otSecret, stageSessionId, sessionId) =>
  */
 const createTokenFan = async (adminId, slug) => {
   const event = await getEventByKey(adminId, slug, 'fanUrl');
-  const {
-    otApiKey,
-    otSecret,
-    httpSupport
-  } = await Admin.getAdmin(event.adminId);
-  const {
-    backstageToken,
-    stageToken
-  } = await createTokensFan(otApiKey, otSecret, event.stageSessionId, event.sessionId);
+  const { otApiKey, otSecret, httpSupport } = await Admin.getAdmin(event.adminId);
+  const { backstageToken, stageToken } = await createTokensFan(otApiKey, otSecret, event.stageSessionId, event.sessionId);
   return R.merge(event, {
     apiKey: otApiKey,
     backstageToken,
