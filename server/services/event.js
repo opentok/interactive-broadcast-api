@@ -1,11 +1,25 @@
 import config from '../../config/config';
 
-const { db } = require('./firebase');
+const CronJob = require('cron').CronJob;
+const moment = require('moment');
 const R = require('ramda');
-const { eventProps, timestampCreate, timestampUpdate, eventStatuses, TS, eventPublicProps } = require('./dbProperties');
+const {
+  db,
+  file
+} = require('./firebase');
+const {
+  eventProps,
+  timestampCreate,
+  timestampUpdate,
+  eventStatuses,
+  TS,
+  eventPublicProps
+} = require('./dbProperties');
 const Admin = require('./admin');
 const OpenTok = require('./opentok');
-const { roles } = require('./auth');
+const {
+  roles
+} = require('./auth');
 const broadcast = require('./broadcast');
 
 /** Private */
@@ -18,7 +32,9 @@ const setDefaults = (eventData) => {
   return R.evolve(setDefaultProps, eventData);
 };
 const buildEvent = (props, eventData) => setDefaults(R.pick(props, eventData));
-const buildOtData = userType => JSON.stringify({ userType });
+const buildOtData = userType => JSON.stringify({
+  userType
+});
 const sortByCreatedAt = R.sortWith([R.ascend(R.prop('createdAt'))]);
 const filterByStatus = status => R.find(R.propEq('status', status));
 
@@ -105,7 +121,9 @@ const getEventByKey = async (adminId, slug, field = 'fanUrl') => {
  */
 const saveEvent = async (data) => {
   const id = db.ref('events').push().key;
-  await db.ref(`events/${id}`).set(buildEvent(eventProps, R.mergeAll([timestampCreate, { id }, data])));
+  await db.ref(`events/${id}`).set(buildEvent(eventProps, R.mergeAll([timestampCreate, {
+    id
+  }, data])));
   return await getEvent(id);
 };
 
@@ -115,11 +133,17 @@ const saveEvent = async (data) => {
  * @returns {Object} <sessionId, stageSessionId>
  */
 const getSessions = async (admin) => {
-  const createSession = ({ otApiKey, otSecret }) => OpenTok.createSession(otApiKey, otSecret);
+  const createSession = ({
+    otApiKey,
+    otSecret
+  }) => OpenTok.createSession(otApiKey, otSecret);
   try {
     const session = await createSession(admin);
     const stageSession = await createSession(admin);
-    return { sessionId: session.sessionId, stageSessionId: stageSession.sessionId };
+    return {
+      sessionId: session.sessionId,
+      stageSessionId: stageSession.sessionId
+    };
   } catch (error) {
     return new Error('error creating sessions', error);
   }
@@ -138,7 +162,10 @@ const create = async (data) => {
   const sessions = await getSessions(admin);
   const status = eventStatuses.NOT_STARTED;
   const rtmpUrl = '';
-  const defaultValues = { status, rtmpUrl };
+  const defaultValues = {
+    status,
+    rtmpUrl
+  };
   return saveEvent(R.mergeAll([defaultValues, data, sessions]));
 };
 
@@ -154,10 +181,10 @@ const update = async (id, data) => {
 };
 
 /**
-* Start archive
-* @param {String} id
-* @returns archiveId
-*/
+ * Start archive
+ * @param {String} id
+ * @returns archiveId
+ */
 const startArchive = async (id) => {
   const event = await getEvent(id);
   if (event.archiveEvent) {
@@ -174,10 +201,10 @@ const startArchive = async (id) => {
 };
 
 /**
-* Stop archive
-* @param {String} id
-* @returns true
-*/
+ * Stop archive
+ * @param {String} id
+ * @returns true
+ */
 const stopArchive = async (event, admin) => {
   if (event.archiveId) {
     try {
@@ -218,8 +245,14 @@ const addActiveBroadcast = async (id) => {
     ref.on('value', async (value) => {
       const activeBroadcast = value.val();
       if (activeBroadcast) {
-        const { activeFans, hlsUrl, hlsEnabled, interactiveLimit, status } = activeBroadcast; // eslint-disable-line  no-unused-vars
-        const viewers = R.length(R.keys(activeFans));  // eslint-disable-line  no-unused-vars
+        const {
+          activeFans,
+          hlsUrl,
+          hlsEnabled,
+          interactiveLimit,
+          status
+        } = activeBroadcast; // eslint-disable-line  no-unused-vars
+        const viewers = R.length(R.keys(activeFans)); // eslint-disable-line  no-unused-vars
         /* Uncomment the next line if you need to consider the limit */
         // const shouldStartBroadcast = hlsEnabled && !hlsUrl && status === 'live' && viewers >= interactiveLimit;
         const shouldStartBroadcast = (hlsEnabled || event.rtmpUrl) && !hlsUrl && status === 'live';
@@ -361,17 +394,30 @@ const deleteEventsByAdminId = async (id) => {
 const createTokenProducer = async (id) => {
   const event = await getEvent(id);
   const admin = await Admin.getAdmin(event.adminId);
-  const options = { role: OpenTok.otRoles.MODERATOR, data: buildOtData(roles.PRODUCER) };
+  const options = {
+    role: OpenTok.otRoles.MODERATOR,
+    data: buildOtData(roles.PRODUCER)
+  };
   const backstageToken = await OpenTok.createToken(admin.otApiKey, admin.otSecret, event.sessionId, options);
   const stageToken = await OpenTok.createToken(admin.otApiKey, admin.otSecret, event.stageSessionId, options);
-  return R.merge(event, { apiKey: admin.otApiKey, backstageToken, stageToken });
+  return R.merge(event, {
+    apiKey: admin.otApiKey,
+    backstageToken,
+    stageToken
+  });
 };
 
 const createTokensFan = async (otApiKey, otSecret, stageSessionId, sessionId) => {
-  const options = { role: OpenTok.otRoles.PUBLISHER, data: buildOtData(roles.FAN) };
+  const options = {
+    role: OpenTok.otRoles.PUBLISHER,
+    data: buildOtData(roles.FAN)
+  };
   const backstageToken = await OpenTok.createToken(otApiKey, otSecret, sessionId, R.assoc('data', buildOtData(roles.BACKSTAGE_FAN), options));
   const stageToken = await OpenTok.createToken(otApiKey, otSecret, stageSessionId, options);
-  return { backstageToken, stageToken };
+  return {
+    backstageToken,
+    stageToken
+  };
 };
 
 
@@ -383,9 +429,21 @@ const createTokensFan = async (otApiKey, otSecret, stageSessionId, sessionId) =>
  */
 const createTokenFan = async (adminId, slug) => {
   const event = await getEventByKey(adminId, slug, 'fanUrl');
-  const { otApiKey, otSecret, httpSupport } = await Admin.getAdmin(event.adminId);
-  const { backstageToken, stageToken } = await createTokensFan(otApiKey, otSecret, event.stageSessionId, event.sessionId);
-  return R.merge(event, { apiKey: otApiKey, backstageToken, stageToken, httpSupport });
+  const {
+    otApiKey,
+    otSecret,
+    httpSupport
+  } = await Admin.getAdmin(event.adminId);
+  const {
+    backstageToken,
+    stageToken
+  } = await createTokensFan(otApiKey, otSecret, event.stageSessionId, event.sessionId);
+  return R.merge(event, {
+    apiKey: otApiKey,
+    backstageToken,
+    stageToken,
+    httpSupport
+  });
 };
 
 /**
@@ -399,9 +457,16 @@ const createTokenHostCeleb = async (adminId, slug, userType) => {
   const field = userType === 'host' ? 'hostUrl' : 'celebrityUrl';
   const event = await getEventByKey(adminId, slug, field);
   const admin = await Admin.getAdmin(event.adminId);
-  const options = { role: OpenTok.otRoles.PUBLISHER, data: buildOtData(userType) };
+  const options = {
+    role: OpenTok.otRoles.PUBLISHER,
+    data: buildOtData(userType)
+  };
   const stageToken = await OpenTok.createToken(admin.otApiKey, admin.otSecret, event.stageSessionId, options);
-  return R.merge(event, { apiKey: admin.otApiKey, stageToken, httpSupport: admin.httpSupport });
+  return R.merge(event, {
+    apiKey: admin.otApiKey,
+    stageToken,
+    httpSupport: admin.httpSupport
+  });
 };
 
 const buildEventKey = (fanUrl, adminId) => [fanUrl, adminId].join('-');
@@ -421,6 +486,53 @@ const createTokenByUserType = async (adminId, userType) => {
   }
   return null;
 };
+
+/**
+ * Clean up event images from firebase for events that have ended more than
+ * n days ago.
+ */
+(() => {
+  // Run the cron job every third day at midnight
+  new CronJob('0 0 */3 * *', async () => { // eslint-disable-line no-new
+    console.log('Cleaning up event images', moment().format('dddd, MMMM Do YYYY, h:mm:ss a'));
+
+    // Get all of the events with a status of 'closed'
+    const snapshot = await db.ref('events').orderByChild('status').equalTo('closed').once('value');
+    const closedEvents = R.values(snapshot.val() || {});
+
+    // How long should we wait before cleaning up event images?
+    const delayInDays = 3;
+    // If the event has been closed for n days or more, we can clean up the images
+    const shouldCleanupImages = ({ showEndedAt, startImage, endImage }) =>
+      (startImage || endImage) && moment(showEndedAt).isBefore(moment().subtract(delayInDays, 'd'));
+
+    // Get the ids of the images for removal
+    const buildCleanupList = (acc, event) => {
+      if (shouldCleanupImages(event)) {
+        const { startImage, endImage } = event; // eslint-disable-next-line no-confusing-arrow
+        const imagesToDelete = R.reduce((list, image) => R.isNil(image) ? list : R.append(image.id, list), [], [startImage, endImage]);
+        return R.concat({ eventId: event.id, images: imagesToDelete }, acc);
+      }
+      return acc;
+    };
+
+    const cleanupList = R.reduce(buildCleanupList, [], closedEvents); // [{ eventId: String, images: [String, String]}, ... ]
+    const imagesToRemove = R.flatten(R.map(R.prop('images'), cleanupList)); // [imageId]
+    const eventsToUpdate = R.map(R.prop('eventId'), cleanupList); // [eventId]
+    const removeImage = fileId => file(`eventImages/${fileId}`).delete();  // Returns a promise
+
+    try {
+      // Remove images from firebase storage
+      await Promise.all(R.map(removeImage, imagesToRemove));
+      // Set image props to null for events in firebase
+      await Promise.all(R.map(R.partialRight(update, [{ startImage: null, endImage: null }], eventsToUpdate)));
+    } catch (error) {
+      // We're going to have errors unless we add a flag to the events, or remove their start/end image properties
+      console.log('Failed to cleanup one or more images for closed events', error);
+    }
+  }, null, true);
+})();
+
 
 export {
   getEvents,

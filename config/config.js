@@ -30,8 +30,10 @@ const config = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
   jwtSecret: envVars.JWT_SECRET,
+  firebaseProjectId: 'opentok-ib',
   fireBaseAuthDomain: 'opentok-ib.firebaseapp.com',
   firebaseDatabaseURL: 'https://opentok-ib.firebaseio.com',
+  firebaseStorageBucket: 'opentok-ib.appspot.com',
   interactiveStreamLimit: envVars.INTERACTIVE_STREAM_LIMIT || Infinity,
   bucketUrl: envVars.BUCKET_URL,
 };
