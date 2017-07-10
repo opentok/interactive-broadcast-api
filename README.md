@@ -4,7 +4,11 @@ The OpenTok Interactive Broadcast Solution Backend is based on  [Apache Hadoop](
 
 This document describes how to create an OpenTok Interactive Broadcast Solution Backend Server.
 
-## Getting Started
+Use the backend server to manages interactive broadcast events. Use it in conjunction with
+the Interactive Broadcast Solution client apps for [the web](https://github.com/opentok/ibs-js),
+[iOS](https://github.com/opentok/ibs-ios), and [Android](https://github.com/opentok/ibs-android).
+
+## Installing dependencies
 
 Clone the repository and `cd` to the project directory.
 ```sh
@@ -22,33 +26,79 @@ Install dependencies:
 yarn
 ```
 
+## Configuration settings
+
 Set environment (vars):
 ```sh
 cp .env.example .env
 ```
 
-Start server:
+Edit the .env file:
+
 ```sh
-yarn start
+NODE_ENV=development
+PORT=3001
+JWT_SECRET=0a6b944d-d2fb-46fc-a85e-0295c986cd9f
+INTERACTIVE_STREAM_LIMIT=2
+BUCKET_URL=INSERT_HERE
 ```
 
-### Configuration
+Replace these values with the following:
 
-Add you Firebase credentials to [config.json](https://github.com/opentok/ibs-backend/blob/IB-API/config/config.js).
+* `NODE_ENV` -- Your Node environment setting, either `development` or `production`.
+
+* `PORT` -- The port for the backend service should use.
+
+* `JWT_SECRET` -- The backend uses this string to generate JWT tokens used to validate
+  all client requests.
+
+* `INTERACTIVE_STREAM_LIMIT` -- The maximum number of active fans to allow in an event.
+  After this limit is reached, a fan connecting to the event will see the HLS broadcast of
+  the event, and the fan will not be able to join the event interactively by publishing their
+  audio-video stream. (Note that Safari users will always receive the HLS broadcast, since
+  OpenTok is not currently supported in Safari.)
+
+* `BUCKET_URL` -- The URL of your Amazon S3 bucket, such as
+  `https//s3.amazonaws.com/yourBucketName`.
+
+Add you Firebase credentials to the /config/config.js file.
 
 ```javascript
 const config = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
   jwtSecret: envVars.JWT_SECRET,
-  fireBaseAuthDomain: 'FIREBASE_AUTHENTICATION_DOMAIN',
-  firebaseDatabaseURL: 'FIREBASE_DATABASE_URL',
+  fireBaseAuthDomain: 'your-app-id.firebaseapp.com',
+  firebaseDatabaseURL: 'https://your-app-id.firebaseio.com',
+  firebaseProjectId: 'your-app-id',
+  firebaseStorageBucket: 'your-app-id.appspot.comx',
   interactiveStreamLimit: envVars.INTERACTIVE_STREAM_LIMIT || Infinity,
-  redisUrl: envVars.REDIS_URL,
 };
 ```
 
-### Deployment
+Set the following values:
+
+* `fireBaseAuthDomain` -- Your Firebase authentication domain. This will look like
+  `'your-app-id.firebaseapp.com'`.
+
+* `firebaseDatabaseURL` -- Your Firebase database URL. This will look like
+  `'https://your-app-id.firebaseio.com'`.
+
+* `firebaseProjectId` -- Your Firebase project ID. This will look like
+  `'your-app-id'`.
+
+* `firebaseStorageBucket` -- Your Firebase storage bucket. This will look like
+  `'your-app-id.appspot.com'`.
+
+## Running the app
+
+Start the server:
+
+```sh
+yarn start
+```
+
+## Deployment
 
 ```sh
 # compile to ES5
@@ -114,7 +164,7 @@ eventGoLive       => Puts the event live.
 
 #### dbProperties.js
 
-Exports the following `Props`
+Exports the following `Props`.
 
 ##### adminProps
 
@@ -322,13 +372,14 @@ checkCelebHost  => Similar to `checkAdmin`, checks if the role of an user is Cel
 
 ## Contribute
 
-If you'd like to contribute to OpenTok IBS's development, please follow the guidelines in the [contributing files](/.github).
+If you'd like to contribute to OpenTok IBS's development, please follow the guidelines in the
+[contributing guidelines](/.github/CONTRIBUTING.md).
 
 ## License
 
 This project is under the [MIT](./LICENSE)
 
-# About OpenTok
+## About OpenTok
 
 ![logo](./tokbox-logo.png)
 
