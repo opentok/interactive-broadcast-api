@@ -307,7 +307,7 @@ firebase.initializeApp({
   credential: firebase.credential.cert(serviceAccountCredentials)
 });
 ```
-It also implements the `verifyIdToken` method that verifies an IdToken with firebase
+It implements the `verifyIdToken` method that verifies an IdToken with firebase
 
 ```javascript
 const verifyIdToken = async (idToken) => {
@@ -319,6 +319,7 @@ const verifyIdToken = async (idToken) => {
   }
 };
 ```
+and also exposes a `file` method which utilizes the google cloud storage API to interact with files in firebase storage.
 
 #### opentok.js
 
@@ -340,27 +341,10 @@ deleteAdmin   => Deletes an admin in firebase-admin
 deleteUser    => Deletes an user in firebase-admin
 ```
 
-#### presence.js
-
-This service updates event data and connections to the local storage
-
-```javascript
-setEventData                    => Returns the data of an event.
-ableToJoinInteractiveByEventKey => Indicates if an user can join to the event for a given `EventKey` by returning a boolean `ableToJoin` and the `eventData`.
-getActiveCount                  => Indicates how many fans are connected to the session by returning the active connections.
-ableToJoinInteractive           => Uses `getInteractiveEventData` to obtain the `EventKey` of an event associated with a fanUrl and adminId, then uses `ableToJoinInteractiveByEventKey` and returns `ableToJoin` and the `eventData`
-updateConnections               => Update active connections to interactive session
-removeLocalStorage              => Clean up local storage
-getActiveConnections            => Returns how many fans are connected to the session
-getInteractiveEventData         => Returns the event data associated with a fanUrl and adminId
-```
-
-#### websocket.js
-Imeplements WebSockets, makes it possible to establish a continuous full-duplex connection stream between a client and a server.
-
 ### Middleware
 
-The Interactive Broadcasting Solution Backend uses a middleware to convert the OpenTok data to a `json` format imeplementing the following **API methods**:
+The Interactive Broadcasting Solution Backend uses the `validation.js` middleware to convert the OpenTok data to a `json` format imeplementing the following **API methods**:
+
 
 ```javascript
 validateApiKey  => Checks if the `APIKey` and `APISecret` are valid.
