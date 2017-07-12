@@ -1,9 +1,8 @@
 import config from '../../config/config';
 
-const CronJob = require('cron').CronJob;
-const moment = require('moment');
 const R = require('ramda');
-const { db, file } = require('./firebase');
+const { db } = require('./firebase');
+const { removeAllImages, updateImages } = require('./imageStorage');
 const { eventProps, timestampCreate, timestampUpdate, eventStatuses, TS, eventPublicProps } = require('./dbProperties');
 const Admin = require('./admin');
 const OpenTok = require('./opentok');
@@ -27,6 +26,7 @@ const buildOtData = userType => JSON.stringify({
 });
 const sortByCreatedAt = R.sortWith([R.ascend(R.prop('createdAt'))]);
 const filterByStatus = status => R.find(R.propEq('status', status));
+const getImages = R.pick(['startImage', 'endImage']);
 
 /** Exports */
 
@@ -166,6 +166,8 @@ const create = async (data) => {
  * @returns {Promise} <resolve: Event data, reject: Error>
  */
 const update = async (id, data) => {
+  const currentImages = getImages((await db.ref(`events/${id}`).once('value')).val());
+  updateImages(currentImages, getImages(data));
   await db.ref(`events/${id}`).update(buildEvent(eventProps, R.merge(timestampUpdate, data)));
   return getEvent(id);
 };
@@ -352,6 +354,7 @@ const changeStatus = async (id, data) => {
  * @param {String} id
  */
 const deleteEvent = async (id) => {
+  removeAllImages(getImages((await db.ref(`events/${id}`).once('value')).val()));
   await db.ref(`events/${id}`).remove();
   return true;
 };
@@ -468,53 +471,6 @@ const createTokenByUserType = async (adminId, userType) => {
   }
   return null;
 };
-
-/**
- * Clean up event images from firebase for events that have ended more than
- * n days ago.
- */
-(() => {
-  // Run the cron job every third day at midnight
-  new CronJob('0 0 */3 * *', async () => { // eslint-disable-line no-new
-    console.log('Cleaning up event images', moment().format('dddd, MMMM Do YYYY, h:mm:ss a'));
-
-    // Get all of the events with a status of 'closed'
-    const snapshot = await db.ref('events').orderByChild('status').equalTo('closed').once('value');
-    const closedEvents = R.values(snapshot.val() || {});
-
-    // How long should we wait before cleaning up event images?
-    const delayInDays = 3;
-    // If the event has been closed for n days or more, we can clean up the images
-    const shouldCleanupImages = ({ showEndedAt, startImage, endImage }) =>
-      (startImage || endImage) && moment(showEndedAt).isBefore(moment().subtract(delayInDays, 'd'));
-
-    // Get the ids of the images for removal
-    const buildCleanupList = (acc, event) => {
-      if (shouldCleanupImages(event)) {
-        const { startImage, endImage } = event; // eslint-disable-next-line no-confusing-arrow
-        const imagesToDelete = R.reduce((list, image) => R.isNil(image) ? list : R.append(image.id, list), [], [startImage, endImage]);
-        return R.concat({ eventId: event.id, images: imagesToDelete }, acc);
-      }
-      return acc;
-    };
-
-    const cleanupList = R.reduce(buildCleanupList, [], closedEvents); // [{ eventId: String, images: [String, String]}, ... ]
-    const imagesToRemove = R.flatten(R.map(R.prop('images'), cleanupList)); // [imageId]
-    const eventsToUpdate = R.map(R.prop('eventId'), cleanupList); // [eventId]
-    const removeImage = fileId => file(`eventImages/${fileId}`).delete();  // Returns a promise
-
-    try {
-      // Remove images from firebase storage
-      await Promise.all(R.map(removeImage, imagesToRemove));
-      // Set image props to null for events in firebase
-      await Promise.all(R.map(R.partialRight(update, [{ startImage: null, endImage: null }], eventsToUpdate)));
-    } catch (error) {
-      // We're going to have errors unless we add a flag to the events, or remove their start/end image properties
-      console.log('Failed to cleanup one or more images for closed events', error);
-    }
-  }, null, true);
-})();
-
 
 export {
   getEvents,
