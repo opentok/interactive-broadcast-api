@@ -229,7 +229,7 @@ const addActiveBroadcast = async (id) => {
     endImage: event.endImage || null,
     activeFans: null,
     archiving: false,
-    hlsEnabled: admin.hls,
+    hlsEnabled: admin.hls || false,
   };
   const ref = db.ref(`activeBroadcasts/${event.adminId}/${event.fanUrl}`);
   try {
