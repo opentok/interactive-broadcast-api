@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import config from '../../config/config';
 import opentok from '../services/opentok';
 import { roles } from '../services/auth';
+import { eventStatuses } from '../services/dbProperties';
 import APIError from '../helpers/APIError';
 
 const Admin = require('../services/admin');
@@ -42,7 +43,7 @@ const validateEvent = (req, res, next) => {
   const { id } = req.params;
   Admin.getAdmin(adminId)
   .then(() => Event.getEventByKey(adminId, fanUrl, 'fanUrl'))
-  .then(event => (!event || event.id === id ? next() : sendError(res, 'Event exists')))
+  .then(event => (!event || event.id === id || event.status === eventStatuses.CLOSED ? next() : sendError(res, 'Event exists')))
   .catch(R.partial(sendError, [res]));
 };
 

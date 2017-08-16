@@ -98,7 +98,7 @@ const getEventByKey = async (adminId, slug, field = 'fanUrl') => {
   if (snapshot.numChildren()) {
     const events = Object.values(snapshot.val());
     // Filtering by adminId
-    return R.find(R.propEq('adminId', adminId))(events);
+    return R.findLast(R.propEq('adminId', adminId))(events);
   }
 
   return null;
@@ -140,12 +140,16 @@ const getSessions = async (admin) => {
 };
 
 /**
- * Save an appointment
+ * Save an event
  * @param {Object} data
- * @param {Object} data.user
- * @param {String} data.user.name
- * @param {String} data.user.email
- * @param {Object} data.appointment
+ * @param {String} data.adminId
+ * @param {Boolean} data.archiveEvent
+ * @param {String} data.celebrityUrl
+ * @param {String} data.fanUrl
+ * @param {String} data.hostUrl
+ * @param {String} data.name
+ * @param {String} data.rtmpUrl
+ * @param {String} data.uncomposed
  */
 const create = async (data) => {
   const admin = await Admin.getAdmin(data.adminId);
