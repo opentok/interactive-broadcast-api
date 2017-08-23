@@ -12,8 +12,8 @@ the Interactive Broadcast Solution client apps for [the web](https://github.com/
 
 Clone the repository and `cd` to the project directory.
 ```sh
-git clone https://github.com/opentok/ibs-backend.git
-cd ibs-backend
+git clone https://github.com/opentok/interactive-broadcast-api
+cd interactive-broadcast-api
 ```
 
 Install yarn:
