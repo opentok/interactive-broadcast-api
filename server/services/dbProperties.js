@@ -1,4 +1,4 @@
-import admin from 'firebase-admin';
+const admin = require('firebase-admin');
 
 const adminProps = [
   'id',
@@ -69,7 +69,7 @@ const eventStatuses = {
   CLOSED: 'closed'
 };
 
-export {
+module.exports = {
   adminProps,
   userProps,
   eventProps,
