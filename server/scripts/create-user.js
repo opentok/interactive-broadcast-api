@@ -1,9 +1,3 @@
-//This is a nodejs script, and requires the following npm packages to run:
-//jssha, btoa and command-line-args
-
-//WARNING - Token generation should NEVER be done client side (in a browser for
-//example), because then you are exposing your developer key to customers
-/*jshint esversion: 6 */
 /**
  *  This is a Nodejs script for creating superadmins that was meant to be executed from a command line.
  *  Required parameters:
