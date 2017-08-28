@@ -18,6 +18,14 @@ const envVarsSchema = Joi.object({
     .description('INTERACTIVE_STREAM_LIMIT is required'),
   BUCKET_URL: Joi.string().required()
     .description('BUCKET_URL required'),
+  FIREBASE_PROJECT_ID: Joi.string().required()
+    .description('FIREBASE_PROJECT_ID required'),
+  FIREBASE_AUTH_DOMAIN: Joi.string().required()
+    .description('FIREBASE_AUTH_DOMAIN required'),
+  FIREBASE_DATABASE_URL: Joi.string().required()
+    .description('FIREBASE_DATABASE_URL required'),
+  FIREBASE_STORAGE_BUCKET: Joi.string().required()
+    .description('FIREBASE_STORAGE_BUCKET required'),        
 }).unknown()
   .required();
 
@@ -30,10 +38,10 @@ const config = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
   jwtSecret: envVars.JWT_SECRET,
-  fireBaseAuthDomain: 'your-app-id.firebaseapp.com',
-  firebaseDatabaseURL: 'https://your-app-id.firebaseio.com',
-  firebaseProjectId: 'your-app-id',
-  firebaseStorageBucket: 'your-app-id.appspot.com',
+  firebaseProjectId: envVars.FIREBASE_PROJECT_ID,
+  fireBaseAuthDomain: envVars.FIREBASE_AUTH_DOMAIN,
+  firebaseDatabaseURL: envVars.FIREBASE_DATABASE_URL,
+  firebaseStorageBucket: envVars.FIREBASE_STORAGE_BUCKET,
   interactiveStreamLimit: envVars.INTERACTIVE_STREAM_LIMIT || Infinity,
   bucketUrl: envVars.BUCKET_URL,
 };
