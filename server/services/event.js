@@ -349,8 +349,7 @@ const changeStatus = async (id, data) => {
     /* update the showEndedAt */
     updateData.showEndedAt = TS;
   }
-  update(id, updateData);
-  return getEvent(id);
+  return update(id, updateData);
 };
 
 /**
