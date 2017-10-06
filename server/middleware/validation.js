@@ -33,9 +33,14 @@ const checkRole = (role, req, res, next) => {
 /* Exports */
 
 const validateApiKey = (req, res, next) => {
-  opentok.createSession(req.body.otApiKey, req.body.otSecret, true)
-  .then(() => next())
-  .catch(R.partial(sendError, [res, 'Invalid APIKey or APISecret']));
+  const { otApiKey, otSecret } = req.body;
+  if (otApiKey && otSecret) {
+    opentok.createSession(otApiKey, otSecret, true)
+    .then(() => next())
+    .catch(R.partial(sendError, [res, 'Invalid APIKey or APISecret']));
+  } else {
+    next();
+  }
 };
 
 const validateEvent = (req, res, next) => {
