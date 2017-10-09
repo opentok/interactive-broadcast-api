@@ -73,7 +73,7 @@ const updateUser = async (uid, data) => {
 const updateAdmin = async (uid, data) => {
   if (await getAdmin(uid)) {
     const adminData = buildAdmin(R.merge(timestampUpdate, data));
-    adminData.otSecret = adminData.otSecret ? encrypt(adminData.otSecret) : '';
+    if (adminData.otSecret) adminData.otSecret = encrypt(adminData.otSecret);
     db.ref(`admins/${uid}`).update(adminData);
     updateUser(uid, R.pick(['email', 'displayName'], data));
     return await getAdmin(uid);
