@@ -44,6 +44,7 @@ const config = {
   firebaseStorageBucket: envVars.FIREBASE_STORAGE_BUCKET,
   interactiveStreamLimit: envVars.INTERACTIVE_STREAM_LIMIT || Infinity,
   bucketUrl: envVars.BUCKET_URL,
+  encryptPassword: envVars.ENCRYPT_PASSWORD,
 };
 
 export default config;
