@@ -34,7 +34,7 @@ const checkRole = (role, req, res, next) => {
 
 const validateApiKey = (req, res, next) => {
   const { otApiKey, otSecret } = req.body;
-  if (otApiKey && otSecret) {
+  if (otApiKey || otSecret) {
     opentok.createSession(otApiKey, otSecret, true)
     .then(() => next())
     .catch(R.partial(sendError, [res, 'Invalid APIKey or APISecret']));
