@@ -6,6 +6,8 @@ const Promise = require('bluebird');
 const OpenTok = require('opentok');
 const R = require('ramda');
 
+const { decrypt } = require('./encrypt');
+
 /** Private */
 
 // apiKey => OT instance
@@ -17,16 +19,18 @@ const defaultSessionOptions = { mediaMode: 'routed' };
  * Get the OT instance for a project (apiKey)
  * @param {String} apiKey
  * @param {String} apiSecret
+ * @param {Boolean} descryptSecret
  */
-const otInstance = (apiKey, apiSecret) => {
+const otInstance = (apiKey, apiSecret, descryptSecret = true) => {
   if (OT[apiKey]) { return OT[apiKey]; }
+  const secret = descryptSecret ? decrypt(apiSecret) : apiSecret;
   const tbrelUrl = 'https://anvil-tbrel.opentok.com';
   const ot = !testPortal ?
-    new OpenTok(apiKey, apiSecret) :
+    new OpenTok(apiKey, secret) :
     R.assocPath(
       ['_client', 'c', 'apiUrl'],
       tbrelUrl,
-      R.assoc('apiUrl', tbrelUrl, new OpenTok(apiKey, apiSecret)) // eslint-disable-line comma-dangle
+      R.assoc('apiUrl', tbrelUrl, new OpenTok(apiKey, secret)) // eslint-disable-line comma-dangle
     );
   OT[apiKey] = ot;
   return ot;
@@ -43,18 +47,24 @@ const otInstance = (apiKey, apiSecret) => {
  */
 const createToken = (apiKey, apiSecret, sessionId, options) => {
   const ot = otInstance(apiKey, apiSecret);
-  return ot.generateToken(sessionId, options);
+  try {
+    return ot.generateToken(sessionId, options);
+  } catch (error) {
+    console.log('Error creating token', error);
+  }
+  return false;
 };
 
 /**
  * Returns a new OpenTok session, along with the corresponding OpenTok API key.
  * @param {Object} ot - An instance of the OpenTok SDK
  * @param {Object} options for the token creation
+ * @param {Boolean} descryptSecret
  * @returns {Promise} <Resolve => {Object}, Reject => {Error}>
  */
-const createSession = (apiKey, apiSecret) =>
+const createSession = (apiKey, apiSecret, descryptSecret = true) =>
   new Promise((resolve, reject) => {
-    const ot = otInstance(apiKey, apiSecret);
+    const ot = otInstance(apiKey, apiSecret, descryptSecret);
     const onCreate = (err, session) => (err ? reject(err) : resolve(session));
     ot.createSession(defaultSessionOptions, onCreate);
   });

@@ -33,8 +33,8 @@ const jwtCelebrity = {
 const createAdmin = {
   body: {
     displayName: Joi.string().required(),
-    otApiKey: Joi.string().required(),
-    otSecret: Joi.string().required(),
+    otApiKey: Joi.string().allow(''),
+    otSecret: Joi.string().allow(''),
     superAdmin: Joi.boolean(),
     httpSupport: Joi.boolean(),
     hls: Joi.boolean(),

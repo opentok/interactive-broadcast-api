@@ -1,6 +1,7 @@
 const { db, admin } = require('./firebase');
 const R = require('ramda');
 const { adminProps, userProps, timestampCreate, timestampUpdate } = require('./dbProperties');
+const { encrypt } = require('./encrypt.js');
 const Event = require('./event');
 
 const setDefaults = (adminData) => {
@@ -37,6 +38,7 @@ const getAdmin = async (uid) => {
  */
 const createAdmin = async (data) => {
   const adminData = buildAdmin(R.merge(timestampCreate, data));
+  adminData.otSecret = adminData.otSecret ? encrypt(adminData.otSecret) : '';
   db.ref(`admins/${data.id}`).set(adminData);
   return getAdmin(data.id);
 };
@@ -71,6 +73,7 @@ const updateUser = async (uid, data) => {
 const updateAdmin = async (uid, data) => {
   if (await getAdmin(uid)) {
     const adminData = buildAdmin(R.merge(timestampUpdate, data));
+    if (adminData.otSecret) adminData.otSecret = encrypt(adminData.otSecret);
     db.ref(`admins/${uid}`).update(adminData);
     updateUser(uid, R.pick(['email', 'displayName'], data));
     return await getAdmin(uid);
