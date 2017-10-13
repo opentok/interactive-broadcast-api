@@ -16,6 +16,22 @@ const testPortal = false;
 const defaultSessionOptions = { mediaMode: 'routed' };
 
 /**
+ * Create the OT instance for a project (apiKey)
+ * @param {String} apiKey
+ * @param {String} apiSecret
+ */
+const createOTInstance = (apiKey, apiSecret) => {
+  const tbrelUrl = 'https://anvil-tbrel.opentok.com';
+  return !testPortal ?
+    new OpenTok(apiKey, apiSecret) :
+    R.assocPath(
+      ['_client', 'c', 'apiUrl'],
+      tbrelUrl,
+      R.assoc('apiUrl', tbrelUrl, new OpenTok(apiKey, apiSecret)) // eslint-disable-line comma-dangle
+    );
+};
+
+/**
  * Get the OT instance for a project (apiKey)
  * @param {String} apiKey
  * @param {String} apiSecret
@@ -24,14 +40,7 @@ const defaultSessionOptions = { mediaMode: 'routed' };
 const otInstance = (apiKey, apiSecret, descryptSecret = true) => {
   if (OT[apiKey]) { return OT[apiKey]; }
   const secret = descryptSecret ? decrypt(apiSecret) : apiSecret;
-  const tbrelUrl = 'https://anvil-tbrel.opentok.com';
-  const ot = !testPortal ?
-    new OpenTok(apiKey, secret) :
-    R.assocPath(
-      ['_client', 'c', 'apiUrl'],
-      tbrelUrl,
-      R.assoc('apiUrl', tbrelUrl, new OpenTok(apiKey, secret)) // eslint-disable-line comma-dangle
-    );
+  const ot = createOTInstance(apiKey, secret);
   OT[apiKey] = ot;
   return ot;
 };
@@ -105,6 +114,7 @@ const otRoles = {
 };
 
 module.exports = {
+  createOTInstance,
   createSession,
   createToken,
   startArchive,
