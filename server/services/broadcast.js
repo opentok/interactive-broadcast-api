@@ -3,6 +3,7 @@
 /** Imports */
 import jwt from 'jsonwebtoken';
 import request from 'request-promise-native';
+import { decrypt } from './encrypt';
 
 
 /** Constants */
@@ -38,7 +39,7 @@ const createToken = (otApiKey, otSecret) => {
     issuer: otApiKey,
     expiresIn: '1m',
   };
-  return jwt.sign({ ist: 'project' }, otSecret, options);
+  return jwt.sign({ ist: 'project' }, decrypt(otSecret), options);
 };
 
 /** Exports */
