@@ -18,6 +18,8 @@ const envVarsSchema = Joi.object({
     .description('INTERACTIVE_STREAM_LIMIT is required'),
   BUCKET_URL: Joi.string().required()
     .description('BUCKET_URL required'),
+  ENCRYPT_PASSWORD: Joi.string().required()
+    .description('ENCRYPT_PASSWORD required'),
   FIREBASE_PROJECT_ID: Joi.string().required()
     .description('FIREBASE_PROJECT_ID required'),
   FIREBASE_AUTH_DOMAIN: Joi.string().required()
@@ -25,7 +27,7 @@ const envVarsSchema = Joi.object({
   FIREBASE_DATABASE_URL: Joi.string().required()
     .description('FIREBASE_DATABASE_URL required'),
   FIREBASE_STORAGE_BUCKET: Joi.string().required()
-    .description('FIREBASE_STORAGE_BUCKET required'),        
+    .description('FIREBASE_STORAGE_BUCKET required'),
 }).unknown()
   .required();
 
