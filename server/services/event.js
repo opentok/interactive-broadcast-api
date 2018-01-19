@@ -6,6 +6,7 @@ const { removeAllImages, updateImages } = require('./imageStorage');
 const { eventProps, timestampCreate, timestampUpdate, eventStatuses, TS, eventPublicProps } = require('./dbProperties');
 const Admin = require('./admin');
 const OpenTok = require('./opentok');
+
 const {
   roles
 } = require('./auth');
@@ -135,7 +136,7 @@ const getSessions = async (admin) => {
       stageSessionId: stageSession.sessionId
     };
   } catch (error) {
-    return new Error('error creating sessions', error);
+    throw new Error('Failed to createSession');
   }
 };
 
@@ -152,15 +153,20 @@ const getSessions = async (admin) => {
  * @param {String} data.uncomposed
  */
 const create = async (data) => {
-  const admin = await Admin.getAdmin(data.adminId);
-  const sessions = await getSessions(admin);
-  const status = eventStatuses.NOT_STARTED;
-  const rtmpUrl = '';
-  const defaultValues = {
-    status,
-    rtmpUrl
-  };
-  return saveEvent(R.mergeAll([defaultValues, data, sessions]));
+  try {
+    const admin = await Admin.getAdmin(data.adminId);
+    const sessions = await getSessions(admin);
+    const status = eventStatuses.NOT_STARTED;
+    const rtmpUrl = '';
+    const defaultValues = {
+      status,
+      rtmpUrl
+    };
+    return saveEvent(R.mergeAll([defaultValues, data, sessions]));
+  } catch (err) {
+    const error = { message: err.message };
+    throw error;
+  }
 };
 
 /**
