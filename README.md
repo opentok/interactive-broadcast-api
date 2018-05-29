@@ -1,4 +1,5 @@
 # OpenTok Interactive Broadcasting Solution Backend
+![OpenTok Labs](https://d26dzxoao6i3hh.cloudfront.net/items/0U1R0a0e2g1E361H0x3c/Image%202017-11-22%20at%2012.16.38%20PM.png?v=2507a2df)
 
 The OpenTok Interactive Broadcast Solution Backend is based on  [Apache Hadoop](https://hadoop.apache.org/docs/stable/index.html) and uses [Firebase](https://firebase.google.com/) as the underlying storage.
 
