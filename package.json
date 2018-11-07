@@ -6,9 +6,9 @@
   "main": "index.js",
   "private": false,
   "engines": {
-    "node": ">=4.8.0",
-    "npm": ">=2.15.11",
-    "yarn": ">=0.20.3"
+    "node": "8.10.0",
+    "npm": "6.4.1",
+    "yarn": "1.12.1"
   },
   "scripts": {
     "start": "gulp serve",
