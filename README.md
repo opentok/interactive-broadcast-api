@@ -1,5 +1,6 @@
 # OpenTok Interactive Broadcasting Solution Backend
-![OpenTok Labs](https://d26dzxoao6i3hh.cloudfront.net/items/0U1R0a0e2g1E361H0x3c/Image%202017-11-22%20at%2012.16.38%20PM.png?v=2507a2df)
+
+<img src="https://assets.tokbox.com/img/vonage/Vonage_VideoAPI_black.svg" height="48px" alt="Tokbox is now known as Vonage" />
 
 The OpenTok Interactive Broadcast Solution Backend is based on  [Apache Hadoop](https://hadoop.apache.org/docs/stable/index.html) and uses [Firebase](https://firebase.google.com/) as the underlying storage.
 
@@ -355,17 +356,20 @@ checkFan        => Similar to `checkAdmin`, checks if the role of an user is Fan
 checkCelebHost  => Similar to `checkAdmin`, checks if the role of an user is Celebrity or Host
 ```
 
-## Contribute
+## Development and Contributing
 
-If you'd like to contribute to OpenTok IBS's development, please follow the guidelines in the
-[contributing guidelines](/.github/CONTRIBUTING.md).
+Interested in contributing? We :heart: pull requests! See the 
+[Contribution](CONTRIBUTING.md) guidelines.
 
-## License
+## Getting Help
 
-This project is under the [MIT](./LICENSE)
+We love to hear from you so if you have questions, comments or find a bug in the project, let us know! You can either:
 
-## About OpenTok
+- Open an issue on this repository
+- See <https://support.tokbox.com/> for support options
+- Tweet at us! We're [@VonageDev](https://twitter.com/VonageDev) on Twitter
+- Or [join the Vonage Developer Community Slack](https://developer.nexmo.com/community/slack)
 
-![logo](./tokbox-logo.png)
+## Further Reading
 
-The OpenTok platform, developed by TokBox, makes it easy to embed high-quality interactive video, voice, messaging, and screen sharing into web and mobile apps. For more info on how OpenTok works, check out our [Core Concepts](https://tokbox.com/developer/guides/core-concepts/).
+- Check out the Developer Documentation at <https://tokbox.com/developer/>
