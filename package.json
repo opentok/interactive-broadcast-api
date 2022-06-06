@@ -58,7 +58,7 @@
     "request": "2.81.0",
     "request-promise-native": "1.0.4",
     "validatorjs": "3.11.0",
-    "winston": "2.3.0"
+    "winston": "2.4.6"
   },
   "devDependencies": {
     "babel-cli": "6.18.0",
