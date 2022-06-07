@@ -54,7 +54,7 @@
     "moment": "^2.22.2",
     "morgan": "1.7.0",
     "opentok": "2.9.1",
-    "ramda": "0.23.0",
+    "ramda": "0.27.1",
     "request": "2.81.0",
     "request-promise-native": "1.0.4",
     "validatorjs": "3.11.0",
