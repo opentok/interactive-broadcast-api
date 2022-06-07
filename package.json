@@ -55,7 +55,7 @@
     "morgan": "1.7.0",
     "opentok": "2.9.1",
     "ramda": "0.23.0",
-    "request": "2.81.0",
+    "request": "2.88.0",
     "request-promise-native": "1.0.4",
     "validatorjs": "3.11.0",
     "winston": "2.3.0"
