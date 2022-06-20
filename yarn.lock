@@ -4677,10 +4677,10 @@ opentok-token@^1.1.1:
     nonce "^1.0.3"
     unix-timestamp "^0.1.2"
 
-opentok@2.9.1:
-  version "2.9.1"
-  resolved "https://registry.yarnpkg.com/opentok/-/opentok-2.9.1.tgz#384e80af7a9b56ca284a78aebd2a2836808a5c74"
-  integrity sha512-CnV3WZitZyiAafIR84V2wEF1JP3+8KC6Flryt9xYAClzNcxWRJTIVnHxHMsK6PcFF8HGg4jMwZ5snwpLmwjIJA==
+opentok@2.9.2:
+  version "2.9.2"
+  resolved "https://registry.yarnpkg.com/opentok/-/opentok-2.9.2.tgz#cd7d7aa76d80027e864a0d06e26858740d3b4f47"
+  integrity sha512-lrp5yIkhRJ2SWr3EbDOFTFVcGQKEFponjFqlBoOb83Xwgaka6RBDVNrt6lCv68bn5EhB0n5hdGt1d1f5ywKGXw==
   dependencies:
     jsonwebtoken "^8.2.0"
     lodash "^4.17.11"
