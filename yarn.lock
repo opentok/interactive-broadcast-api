@@ -2139,12 +2139,13 @@ express-validation@1.0.1:
   dependencies:
     lodash "^4.9.0"
 
-express-winston@2.1.2:
-  version "2.1.2"
-  resolved "https://registry.yarnpkg.com/express-winston/-/express-winston-2.1.2.tgz#8661075253166cdf2fc82f0f4675472b5f02a089"
+express-winston@2.5.0:
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/express-winston/-/express-winston-2.5.0.tgz#afaf005b62ad4469b0692ea22f745a06a5ebbead"
+  integrity sha512-Kdgj4ZJBA2k0P7LYh/srW1LBEhvj588DAPV+lq6cVRnVwKpEX/Mt/C3LZWJrp459r5zomk10cPQMzyVtauFy/Q==
   dependencies:
     chalk "~0.4.0"
-    lodash "~4.11.1"
+    lodash "~4.17.5"
 
 express@4.14.0:
   version "4.14.0"
@@ -4114,9 +4115,10 @@ lodash@~1.0.1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-1.0.2.tgz#8f57560c83b59fc270bd3d561b690043430e2551"
 
-lodash@~4.11.1:
-  version "4.11.2"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.11.2.tgz#d6b4338b110a58e21dae5cebcfdbbfd2bc4cdb3b"
+lodash@~4.17.5:
+  version "4.17.21"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
+  integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
 
 log-driver@1.2.5, log-driver@^1.2.5:
   version "1.2.5"
