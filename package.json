@@ -28,7 +28,7 @@
     "url": "git@github.com:KunalKapadia/express-mongoose-es6-rest-api.git"
   },
   "dependencies": {
-    "@google-cloud/storage": "1.2.0",
+    "@google-cloud/storage": "5.0.0",
     "bcrypt-nodejs": "0.0.3",
     "bluebird": "3.4.6",
     "body-parser": "1.15.2",
