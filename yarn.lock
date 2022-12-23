@@ -3773,6 +3773,17 @@ jsonpointer@^4.0.0:
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/jsonpointer/-/jsonpointer-4.0.1.tgz#4fd92cb34e0e9db3c89c8622ecf51f9b978c6cb9"
 
+jsonwebtoken@7.1.10:
+  version "7.1.10"
+  resolved "https://registry.yarnpkg.com/jsonwebtoken/-/jsonwebtoken-7.1.10.tgz#a4601a3dddc28c95ea36515c8082e2bd50d4cc54"
+  integrity sha512-JaVcxH+TeHQim+KJXDl5Y8d31Yur/rPHOwUzVA9xPwnh9dXmdZZNWrtBosb6F0DHlyCst7K/nfFu0rD3WwNkCw==
+  dependencies:
+    joi "^6.10.1"
+    jws "^3.1.4"
+    lodash.once "^4.0.0"
+    ms "^0.7.1"
+    xtend "^4.0.1"
+
 jsonwebtoken@7.1.9:
   version "7.1.9"
   resolved "https://registry.yarnpkg.com/jsonwebtoken/-/jsonwebtoken-7.1.9.tgz#847804e5258bec5a9499a8dc4a5e7a3bae08d58a"
