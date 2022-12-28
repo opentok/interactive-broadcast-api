@@ -2133,9 +2133,10 @@ express-unless@^0.3.0:
   version "0.3.1"
   resolved "https://registry.yarnpkg.com/express-unless/-/express-unless-0.3.1.tgz#2557c146e75beb903e2d247f9b5ba01452696e20"
 
-express-validation@1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/express-validation/-/express-validation-1.0.1.tgz#630946f10cff406406ab19881e37be14562a0fba"
+express-validation@1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/express-validation/-/express-validation-1.0.2.tgz#7d589dd3b257c55b3e004665b6c69cb12cc2b142"
+  integrity sha512-iHUN1wfxBKx6zcbS4aUdD8izjbMxSyBDw/sWPvkN2k0KZSQuyOCrWT2cZWFsH9Sl5rnP6zFppX3KD7LetNcuJQ==
   dependencies:
     lodash "^4.9.0"
 
