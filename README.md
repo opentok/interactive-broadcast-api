@@ -2,6 +2,8 @@
 
 <img src="https://assets.tokbox.com/img/vonage/Vonage_VideoAPI_black.svg" height="48px" alt="Tokbox is now known as Vonage" />
 
+**Important note:** We are archiving this prject. Contact Vonage support if you have questions.
+
 The OpenTok Interactive Broadcast Solution Backend is based on  [Apache Hadoop](https://hadoop.apache.org/docs/stable/index.html) and uses [Firebase](https://firebase.google.com/) as the underlying storage.
 
 This document describes how to create an OpenTok Interactive Broadcast Solution Backend Server.
